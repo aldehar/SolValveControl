@@ -20,7 +20,7 @@ outputPinList = [17, 27, 22, 23, 24]
 
 # SPI
 spi = None
-# SPI - Channel 1
+# SPI - Channel 0
 ch0 = 0x00
 
 def init():
@@ -56,8 +56,8 @@ def initGUI():
         lbl.place(x=200, y=50*i, width=100)
         lblList.append(lbl)
 	
-    win.title("Sol Valve with GPIO")
-    win.geometry("400x400")
+    win.title("Solenoid Valve Controller")
+    win.geometry("400x400+200+200")
     win.protocol("WM_DELETE_WINDOW", onWinClose)
 
 def onWinClose():
@@ -115,34 +115,22 @@ def initSPI():
     spi=spidev.SpiDev()
     # (bus, device)
     spi.open(0,0)
-    spi.max_speed_hz=1000000
-    spi.bits_per_word=8
-    '''
-    dummy=0xff
-    start=0x47
-    sgl=0x20
-    ch0=0x00
-    ch1=0x10
-    msbf=0x08
-    '''
+    spi.max_speed_hz = 1000000
+    spi.bits_per_word = 8
 
 def setOutput(level):
     for nPin in outputPinList:
         GPIO.output(nPin, level)
 
 def measure(ch):
-    # outAdc = spi.xfer2([(start+sgl+ch+msbf),dummy])
-    #v=((((ad[0]&0x03)<<8)+ad[1])*3.3)/1023
-    
     read = spi.xfer2([1, (8+ch)<<4, 0])
     outAdc = ((read[1]&3) << 8) + read[2]
     v = (outAdc * 3.3) / 1024
     print("[Ch {}] r:[{}], out:[{}],v:{} V".format(0, read, outAdc, v))
     
-    lblList[0].config(text=str(ch))
-    lblList[1].config(text=str(read))
-    lblList[2].config(text=str(outAdc))
-    lblList[3].config(text=str(v))
+    printLblList = [str(ch), str(read), str(outAdc), str(v)]
+    for i, v in enumerate(printLblList):
+        lblList[i].config(text=v)
 
     return v
     
