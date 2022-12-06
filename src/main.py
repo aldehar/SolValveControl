@@ -1,6 +1,8 @@
 import time
+import datetime
 import threading
 import tkinter as tk
+# RPi dependency
 import spidev
 import RPi.GPIO as GPIO
 
@@ -12,6 +14,8 @@ isOffList = []
 btnList = []
 # Label list
 lblList =[]
+
+lblClock = None
 
 # GPIO input pin list
 inputPinList = []
@@ -33,8 +37,15 @@ def init():
     tSpi.daemon=True
     tSpi.start()
 
+    # 시간 표시
+    printClock()
+
 def initGUI():
     # print("initGUI called...")
+    global lblClock
+    lblClock = tk.Label(win, text="##:##:##")
+    lblClock.place(x=100, y=0, width=200)
+
     for i in range(0, 5):
         strIsOffBtn = ""
         if isOffList[i]:
@@ -43,17 +54,17 @@ def initGUI():
             strIsOffBtn = "On"
 
         btn = tk.Button(win, text="GPIO {} {}".format(outputPinList[i], strIsOffBtn), command=lambda no=i: onBtnClick(no))
-        btn.place(x=0, y=50*i, width=100)
+        btn.place(x=0, y=50*(i+1), width=100)
         btnList.append(btn)
 
     lblCaptionList = ["Channel", "Read", "OutAdc", "Voltage"]
     for i, v in enumerate(lblCaptionList):
         lbl = tk.Label(win, text=v)
-        lbl.place(x=150, y=50*i, width=50)
+        lbl.place(x=150, y=50*(i+1), width=50)
 
     for i in range(0, 4):
         lbl = tk.Label(win, text="-")
-        lbl.place(x=200, y=50*i, width=100)
+        lbl.place(x=200, y=50*(i+1), width=100)
         lblList.append(lbl)
 	
     win.title("Solenoid Valve Controller")
@@ -123,14 +134,17 @@ def setOutput(level):
         GPIO.output(nPin, level)
 
 def measure(ch):
-    read = spi.xfer2([1, (8+ch)<<4, 0])
-    outAdc = ((read[1]&3) << 8) + read[2]
-    v = (outAdc * 3.3) / 1024
-    print("[Ch {}] r:[{}], out:[{}],v:{} V".format(0, read, outAdc, v))
-    
-    printLblList = [str(ch), str(read), str(outAdc), str(v)]
-    for i, v in enumerate(printLblList):
-        lblList[i].config(text=v)
+    try:
+        read = spi.xfer2([1, (8+ch)<<4, 0])
+        outAdc = ((read[1]&3) << 8) + read[2]
+        v = (outAdc * 3.3) / 1024
+        print("[Ch {}] r:[{}], out:[{}],v:{} V".format(0, read, outAdc, v))
+        
+        printLblList = [str(ch), str(read), str(outAdc), str(v)]
+        for i, v in enumerate(printLblList):
+            lblList[i].config(text=v)
+    except Exception as e:
+        print("Ignore Exception cause : ", e)
 
     return v
     
@@ -150,6 +164,19 @@ def waitInput():
             time.sleep(0.5)
     except KeyboardInterrupt:
         pass
+
+def printClock():
+    lblClock.config(text=getNow())
+
+    # 1초 마다 호출
+    tClock = threading.Timer(1, printClock)
+    tClock.daemon = True
+    tClock.start()
+
+def getNow():
+    now = datetime.datetime.now()
+    formattedTime = now.strftime("%Y-%m-%d %H:%M:%S")
+    return formattedTime
 
 if __name__ == "__main__":
     init()
