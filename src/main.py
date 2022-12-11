@@ -14,6 +14,12 @@ isOffList = []
 btnList = []
 # Label list
 lblList =[]
+# Spinbox list
+sbList = []
+# sv list
+svList = []
+# set button list
+btnSetList = []
 
 lblClock = None
 
@@ -31,17 +37,11 @@ def init():
     initGPIO()
     initGUI()
     initSPI()
-    
-    # SPI 통신에서 수신을 위한 thread
-    tSpi = threading.Thread(target=waitInput, args=())
-    tSpi.daemon=True
-    tSpi.start()
 
-    # 시간 표시
+    # 시간 표시 - 1초 틱마다 호출
     printClock()
 
 def initGUI():
-    # print("initGUI called...")
     global lblClock
     lblClock = tk.Label(win, text="##:##:##")
     lblClock.place(x=100, y=0, width=200)
@@ -54,25 +54,38 @@ def initGUI():
             strIsOffBtn = "On"
 
         btn = tk.Button(win, text="GPIO {} {}".format(outputPinList[i], strIsOffBtn), command=lambda no=i: onBtnClick(no))
-        btn.place(x=0, y=50*(i+1), width=100)
+        btn.place(x=50, y=50*(i+1), width=100)
         btnList.append(btn)
 
     lblCaptionList = ["Channel", "Read", "OutAdc", "Voltage"]
     for i, v in enumerate(lblCaptionList):
         lbl = tk.Label(win, text=v)
-        lbl.place(x=150, y=50*(i+1), width=50)
+        lbl.place(x=200, y=50*(i+1), width=50)
 
     for i in range(0, 4):
         lbl = tk.Label(win, text="-")
-        lbl.place(x=200, y=50*(i+1), width=100)
+        lbl.place(x=250, y=50*(i+1), width=100)
         lblList.append(lbl)
 	
+    for i in range(0, 5):
+        btn = tk.Button(win, text="Disable", command=lambda no=i: onToggleBtnClick(no))
+        btn.place(x=50+75*i, y=300, width=50, height=25)
+        btnSetList.append(btn)
+
+    for i in range(0, 5):
+        sv = tk.StringVar()
+        sv.set("0")
+        sb = tk.Spinbox(win, textvariable=sv)
+        sb.place(x=50+75*i, y=325, width=50)
+        sbList.append(sb)
+        svList.append(sv)
+
     win.title("Solenoid Valve Controller")
-    win.geometry("400x400+200+200")
+    win.geometry("450x400+200+200")
     win.protocol("WM_DELETE_WINDOW", onWinClose)
 
+# 윈도우 x키 눌러서 종료시, 호출
 def onWinClose():
-    # print("onWinClose called...")
     spi.close()
     setOutput(GPIO.LOW)
     GPIO.cleanup()
@@ -96,8 +109,16 @@ def onBtnClick(no):
     # 0.1 sec wait
     time.sleep(0.1)
     
+def onToggleBtnClick(no):
+    btn = btnSetList[no]
+    if btn["text"] == "Enable":
+        btn.config(text="Disable")
+    elif btn["text"] == "Disable":
+        btn.config(text="Enable")
+    else:
+        print("[WARN] unknown text : ", btn["text"])
+
 def initGPIO():
-    # print("initGPIO called...")
     # GPIO.BCM or GPIO.BOARD
     GPIO.setmode(GPIO.BCM)
     
@@ -121,7 +142,6 @@ def initGPIO():
         isOffList.append(False)
     
 def initSPI():
-    # print("initSPI called...")
     global spi
     spi=spidev.SpiDev()
     # (bus, device)
@@ -129,17 +149,23 @@ def initSPI():
     spi.max_speed_hz = 1000000
     spi.bits_per_word = 8
 
+    # SPI 통신에서 수신을 위한 thread
+    tSpi = threading.Thread(target=waitInput, args=())
+    tSpi.daemon=True
+    tSpi.start()
+
 def setOutput(level):
     for nPin in outputPinList:
         GPIO.output(nPin, level)
 
-def measure(ch):
+def readSPI(ch):
     try:
         read = spi.xfer2([1, (8+ch)<<4, 0])
         outAdc = ((read[1]&3) << 8) + read[2]
-        v = (outAdc * 3.3) / 1024
+        v = (outAdc * 3.3) / 1023
+
+        # for checking
         print("[Ch {}] r:[{}], out:[{}],v:{} V".format(0, read, outAdc, v))
-        
         printLblList = [str(ch), str(read), str(outAdc), str(v)]
         for i, v in enumerate(printLblList):
             lblList[i].config(text=v)
@@ -149,7 +175,6 @@ def measure(ch):
     return v
     
 def waitInput():
-    # print("waitInput called...")
     try:
         while True:
             '''
@@ -159,20 +184,34 @@ def waitInput():
             '''
             
             # SPI 입력
-            voltage = measure(ch0)
-            # print("ch0={} V, ch1={} V".format(voltage))
+            voltage = readSPI(ch0)
+
             time.sleep(0.5)
     except KeyboardInterrupt:
         pass
 
+# 1초 마다 호출 됨
 def printClock():
     lblClock.config(text=getNow())
 
-    # 1초 마다 호출
+    for i, sv in enumerate(svList):
+        btn = btnSetList[i]
+        btnText = btn["text"]
+        if btnText == "Enable":
+            s = sv.get()
+            sec = int(s)
+            if sec > 0:
+                sec -= 1
+                sv.set(sec)
+
+                if sec == 0:
+                    btn.config(text="Disable")
+
     tClock = threading.Timer(1, printClock)
     tClock.daemon = True
     tClock.start()
 
+# 현재시간
 def getNow():
     now = datetime.datetime.now()
     formattedTime = now.strftime("%Y-%m-%d %H:%M:%S")
