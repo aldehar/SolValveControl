@@ -53,8 +53,11 @@ def initGUI():
         else:
             strIsOffBtn = "On"
 
-        btn = tk.Button(win, text="GPIO {} {}".format(outputPinList[i], strIsOffBtn), command=lambda no=i: onBtnClick(no))
-        btn.place(x=50, y=50*(i+1), width=100)
+        lbl = tk.Label(win, text="Valve "+str(i+1))
+        lbl.place(x=50, y=50*(i+1), width=50)
+
+        btn = tk.Button(win, text="GPIO {} {}".format(outputPinList[i], strIsOffBtn), bg="blue", fg="white", command=lambda no=i: onBtnClick(no))
+        btn.place(x=100, y=50*(i+1), width=75)
         btnList.append(btn)
 
     lblCaptionList = ["Channel", "Read", "OutAdc", "Voltage"]
@@ -68,15 +71,19 @@ def initGUI():
         lblList.append(lbl)
 	
     for i in range(0, 5):
+        lbl = tk.Label(win, text="Valve "+ str(i+1))
+        lbl.place(x=50+75*i, y=300, width=50, height=25)
+
+    for i in range(0, 5):
         btn = tk.Button(win, text="Disable", command=lambda no=i: onToggleBtnClick(no))
-        btn.place(x=50+75*i, y=300, width=50, height=25)
+        btn.place(x=50+75*i, y=325, width=50, height=25)
         btnSetList.append(btn)
 
     for i in range(0, 5):
         sv = tk.StringVar()
         sv.set("0")
         sb = tk.Spinbox(win, textvariable=sv)
-        sb.place(x=50+75*i, y=325, width=50)
+        sb.place(x=50+75*i, y=350, width=50)
         sbList.append(sb)
         svList.append(sv)
 
@@ -100,11 +107,13 @@ def onBtnClick(no):
         print("GPIO {} ==> Low".format(nPin))
         isOffList[no] = False
         btn.config(text="GPIO {} On".format(nPin))
+        btn.config(bg="blue")
     else:
         GPIO.output(nPin, GPIO.HIGH)
         print("GPIO {} ==> High".format(nPin))
         isOffList[no] = True
         btn.config(text="GPIO {} Off".format(nPin))
+        btn.config(bg="red")
     	
     # 0.1 sec wait
     time.sleep(0.1)
