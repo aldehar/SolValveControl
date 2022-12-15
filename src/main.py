@@ -43,8 +43,8 @@ def init():
 
 def initGUI():
     global lblClock
-    lblClock = tk.Label(win, text="##:##:##")
-    lblClock.place(x=100, y=0, width=200)
+    lblClock = tk.Label(win, text="##:##:##", font=("Arial Bold", 12))
+    lblClock.place(x=125, y=15, width=200)
 
     for i in range(0, 5):
         strIsOffBtn = ""
@@ -53,7 +53,7 @@ def initGUI():
         else:
             strIsOffBtn = "On"
 
-        lbl = tk.Label(win, text="Valve "+str(i+1))
+        lbl = tk.Label(win, text="Valve "+str(i+1), font=("Arial Bold", 9))
         lbl.place(x=50, y=50*(i+1), width=50)
 
         btn = tk.Button(win, text="GPIO {} {}".format(outputPinList[i], strIsOffBtn), bg="blue", fg="white", command=lambda no=i: onBtnClick(no))
@@ -62,7 +62,7 @@ def initGUI():
 
     lblCaptionList = ["Channel", "Read", "OutAdc", "Voltage"]
     for i, v in enumerate(lblCaptionList):
-        lbl = tk.Label(win, text=v)
+        lbl = tk.Label(win, text=v, font=("Arial Bold", 9))
         lbl.place(x=200, y=50*(i+1), width=50)
 
     for i in range(0, 4):
@@ -70,25 +70,28 @@ def initGUI():
         lbl.place(x=250, y=50*(i+1), width=100)
         lblList.append(lbl)
 	
-    for i in range(0, 5):
-        lbl = tk.Label(win, text="Valve "+ str(i+1))
-        lbl.place(x=50+75*i, y=300, width=50, height=25)
+    lblTimer = tk.Label(win, text="Timer", font=("Arial Bold", 11))
+    lblTimer.place(x=50, y=300)
 
     for i in range(0, 5):
-        btn = tk.Button(win, text="Disable", command=lambda no=i: onToggleBtnClick(no))
-        btn.place(x=50+75*i, y=325, width=50, height=25)
+        lbl = tk.Label(win, text="Valve "+ str(i+1), font=("Arial Bold", 9))
+        lbl.place(x=50+75*i, y=325, width=50, height=25)
+
+    for i in range(0, 5):
+        btn = tk.Button(win, text="Disable", bg="orange", fg="white", command=lambda no=i: onToggleBtnClick(no))
+        btn.place(x=50+75*i, y=350, width=50, height=25)
         btnSetList.append(btn)
 
     for i in range(0, 5):
         sv = tk.StringVar()
         sv.set("0")
         sb = tk.Spinbox(win, textvariable=sv)
-        sb.place(x=50+75*i, y=350, width=50)
+        sb.place(x=50+75*i, y=375, width=50)
         sbList.append(sb)
         svList.append(sv)
 
     win.title("Solenoid Valve Controller")
-    win.geometry("450x400+200+200")
+    win.geometry("450x425+200+200")
     win.protocol("WM_DELETE_WINDOW", onWinClose)
 
 # 윈도우 x키 눌러서 종료시, 호출
@@ -122,8 +125,10 @@ def onToggleBtnClick(no):
     btn = btnSetList[no]
     if btn["text"] == "Enable":
         btn.config(text="Disable")
+        btn.config(bg="orange")
     elif btn["text"] == "Disable":
         btn.config(text="Enable")
+        btn.config(bg="green")
     else:
         print("[WARN] unknown text : ", btn["text"])
 
@@ -134,11 +139,11 @@ def initGPIO():
     ##########################
     # BCM => BOARD
     ##########################
-    # GPIO 5 => 29
-    # GPIO 6 => 31
-    # GPIO 13 => 33
-    # GPIO 19 => 35
-    # GPIO 26 => 37
+    # GPIO 17 => 11
+    # GPIO 27 => 13
+    # GPIO 22 => 15
+    # GPIO 23 => 16
+    # GPIO 24 => 18
     ##########################
     for nPin in inputPinList:
         GPIO.setup(nPin, GPIO.IN)
@@ -171,7 +176,7 @@ def readSPI(ch):
     try:
         read = spi.xfer2([1, (8+ch)<<4, 0])
         outAdc = ((read[1]&3) << 8) + read[2]
-        v = (outAdc * 3.3) / 1023
+        v = round(((outAdc * 3.3) / 1023), 5)
 
         # for checking
         print("[Ch {}] r:[{}], out:[{}],v:{} V".format(0, read, outAdc, v))
@@ -186,12 +191,6 @@ def readSPI(ch):
 def waitInput():
     try:
         while True:
-            '''
-            # GPIO 입력에 의한 출력이 필요할 경우,
-            if pin_in_17:
-                GPIO.output(18, GPIO.HIGH)
-            '''
-            
             # SPI 입력
             voltage = readSPI(ch0)
 
