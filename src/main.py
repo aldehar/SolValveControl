@@ -2,11 +2,12 @@ import sys
 import datetime
 import threading
 from functools import partial
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel,QSpinBox, QComboBox, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel,QSpinBox, QComboBox, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea
 from PyQt5.QtGui import *
 from PyQt5.QtCore import Qt
+from PyQt5 import QtCore
 
-import RPiUtil
+import RPiManager
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -15,7 +16,7 @@ class MainWindow(QMainWindow):
         self.printClock()
 
         # 라즈베리파이 관련 인스턴스
-        self.rpiUtil = RPiUtil.init(self)
+        self.rpiUtil = RPiManager.init(self)
 
     def initUI(self):
         self.oImg = {
@@ -32,37 +33,33 @@ class MainWindow(QMainWindow):
         timeFont = self.lblTime.font()
         timeFont.setPointSize(16)
         self.lblTime.setFont(timeFont)
-        self.lblTime.setFixedSize(600, 25)
+        self.lblTime.setFixedSize(250, 40)
         self.lblTime.setAlignment(Qt.AlignCenter)
-        self.mainLayout.addWidget(self.lblTime)
 
         # 상단 - 자동/수동 전환 버튼
-        self.btnOnOff = QPushButton("")
-        self.btnOnOff.setFixedSize(100, 40)
-
-        lblMode = QLabel("현재 모드 : ")
-        modeFont = lblMode.font()
+        self.lblMode = QLabel("자동모드")
+        self.lblMode.setFixedSize(220, 40)
+        modeFont = self.lblMode.font()
         modeFont.setBold(True)
         modeFont.setPointSize(16)
-        lblMode.setFont(modeFont)
-
-        self.lblMode = QLabel("자동모드")
         self.lblMode.setFont(modeFont)
 
+        self.btnOnOff = QPushButton("")
+        self.btnOnOff.setFixedSize(100, 40)
         self.btnOnOff.setStyleSheet("background-image : url({});background-repeat: no-repeat;".format(self.oImg["on"]))
         self.btnOnOff.clicked.connect(partial(self.onOffBtnClicked))
 
-        self.top2Layout = QHBoxLayout()
-        self.top2Layout.addWidget(lblMode)
-        self.top2Layout.addWidget(self.lblMode)
-        self.top2Layout.addWidget(self.btnOnOff)
-        self.mainLayout.addLayout(self.top2Layout)
+        self.topLayout = QHBoxLayout()
+        self.topLayout.setAlignment(Qt.AlignCenter)
+        self.topLayout.addWidget(self.lblTime)
+        self.topLayout.addWidget(self.lblMode)
+        self.topLayout.addWidget(self.btnOnOff)
+        self.mainLayout.addLayout(self.topLayout)
 
         self.body = QStackedWidget()
+        self.body.setFixedSize(600,550)
         self.autoPage = QWidget()
         self.manualPage = QWidget()
-        self.body.addWidget(self.autoPage)
-        self.body.addWidget(self.manualPage)
 
         ###########################################################################################
         # 자동 레이아웃
@@ -272,12 +269,22 @@ class MainWindow(QMainWindow):
             btn["o"].clicked.connect(partial(self.onBtnClicked, btn["title"], btn["no"]))
 
         # 레이아웃
-        self.mainLayout.addWidget(self.body)
+        self.body.addWidget(self.autoPage)
+        self.body.addWidget(self.manualPage)
         self.body.setCurrentIndex(0)
 
+        self.mainLayout.addWidget(self.body)
+        self.mainLayout.setAlignment(Qt.AlignCenter)
+        
         self.mainWidget = QWidget()
         self.mainWidget.setLayout(self.mainLayout)
-        self.setCentralWidget(self.mainWidget)
+
+        self.scroll = QScrollArea()
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setWidget(self.mainWidget)
+        self.setCentralWidget(self.scroll)
 
     # On 온/오프 버튼 clicked
     def onOffBtnClicked(self):
@@ -403,7 +410,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = MainWindow()
     win.setWindowTitle("Solenoid Valve v0.1 test")
-    win.setGeometry(300, 300, 600, 600)
+    win.setGeometry(300, 300, 625, 575)
     win.show()
 
     sys.exit(app.exec_())
