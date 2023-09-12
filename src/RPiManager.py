@@ -13,6 +13,7 @@ class Comm:
 
     spi = None
     ch0 = 0x00
+    ch1 = 0x10
     # SPI 통신대기 시간(단위:초)
     waitTime = 0.5
 
@@ -91,7 +92,8 @@ class Comm:
         try:
             while True:
                 # SPI 입력
-                voltage = self.readSPI(self.ch0)
+                self.readSPI(self.ch0)
+                self.readSPI(self.ch1)
                 time.sleep(self.waitTime)
         except KeyboardInterrupt:
             pass

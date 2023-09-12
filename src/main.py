@@ -397,6 +397,7 @@ class MainWindow(QMainWindow):
 
     # spi 통신결과 받으면,
     def onRecvResult(self, o):
+        print(str(o))
         self.pressure.setText(str(o))
         self.manualPressure.setText(str(o))
 
