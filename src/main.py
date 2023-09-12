@@ -2,7 +2,7 @@ import sys
 import datetime
 import threading
 from functools import partial
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel,QSpinBox, QComboBox, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel,QSpinBox, QComboBox, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea, QMessageBox
 from PyQt5.QtGui import *
 from PyQt5.QtCore import Qt
 from PyQt5 import QtCore
@@ -18,6 +18,26 @@ class MainWindow(QMainWindow):
         # 라즈베리파이 관련 인스턴스
         self.rpiUtil = RPiManager.init(self)
 
+    # 임시
+    def setSchedule(self):
+        unitFactor = {"h":3600, "m":60, "s":1}
+
+        defaultSchedule = [
+            {"no":1, "valve":4, "period":"1m", "isSequence":False},
+            {"no":2, "valve":1, "period":"10s", "isSequence":True},
+            {"no":3, "valve":2, "period":"15s", "isSequence":True},
+            {"no":4, "valve":3, "period":"20s", "isSequence":True},
+            {"no":5, "valve":5, "period":"30s", "isSequence":False}
+        ]
+
+        for dSchedule in self.defaultSchedule:
+            valveNo = int(dSchedule["valve"])
+            unitFactor = unitFactor[dSchedule["period"][-1:]]
+            nTime = dSchedule["period"][:-1]
+            period = nTime * unitFactor
+            idx = dSchedule["no"]-1
+    
+    # UI 초기화
     def initUI(self):
         self.oImg = {
             "on":"res/imgs/on.png",
@@ -129,7 +149,7 @@ class MainWindow(QMainWindow):
             btn["o"].move(btn["x"], btn["y"])
             btn["o"].resize(btn["w"], btn["h"])
             btn["o"].setStyleSheet("background-image : url("+ btn["img"] +");background-repeat: no-repeat; background-color:red;")
-            btn["o"].clicked.connect(partial(self.onBtnClicked, btn["title"], btn["no"]))
+            btn["o"].clicked.connect(partial(self.onBtnClicked, btn["no"]))
 
         # 활성화/비활성화 버튼
         self.btnEnableList = [
@@ -149,11 +169,11 @@ class MainWindow(QMainWindow):
 
         # 콤보박스
         self.cbList = [
-            {"no":1, "o":None, "title":"", "x":25, "y":450, "w":75,"h":20},
-            {"no":2, "o":None, "title":"", "x":125, "y":450, "w":75,"h":20},
-            {"no":3, "o":None, "title":"", "x":225, "y":450, "w":75,"h":20},
-            {"no":4, "o":None, "title":"", "x":325, "y":450, "w":75,"h":20},
-            {"no":5, "o":None, "title":"", "x":425, "y":450, "w":75,"h":20}
+            {"no":1, "o":None, "title":"4", "x":25, "y":450, "w":75,"h":20},
+            {"no":2, "o":None, "title":"1", "x":125, "y":450, "w":75,"h":20},
+            {"no":3, "o":None, "title":"2", "x":225, "y":450, "w":75,"h":20},
+            {"no":4, "o":None, "title":"3", "x":325, "y":450, "w":75,"h":20},
+            {"no":5, "o":None, "title":"5", "x":425, "y":450, "w":75,"h":20}
         ]
         
         for cb in self.cbList:
@@ -165,7 +185,7 @@ class MainWindow(QMainWindow):
             cb["o"].addItem("Valve 5")
             cb["o"].move(cb["x"], cb["y"])
             cb["o"].resize(cb["w"], cb["h"])
-            cb["o"].setCurrentIndex(cb["no"]-1)
+            cb["o"].setCurrentIndex(int(cb["title"])-1)
             cb["o"].currentIndexChanged.connect(partial(self.onCbChanged, cb["no"]))
         
         # 밸브 선택 스핀박스
@@ -266,7 +286,7 @@ class MainWindow(QMainWindow):
             btn["o"].move(btn["x"], btn["y"])
             btn["o"].resize(btn["w"], btn["h"])
             btn["o"].setStyleSheet("background-image : url("+ btn["img"] +");background-repeat: no-repeat; background-color:red;")
-            btn["o"].clicked.connect(partial(self.onBtnClicked, btn["title"], btn["no"]))
+            btn["o"].clicked.connect(partial(self.onBtnClicked, btn["no"]))
 
         # 레이아웃
         self.body.addWidget(self.autoPage)
@@ -303,15 +323,39 @@ class MainWindow(QMainWindow):
     # On 콤보박스 index Changed
     def onCbChanged(self, no):
         oCbBox = self.cbList[no-1]["o"]
-        print(oCbBox.currentText())
+        newStr = oCbBox.currentText()
+        print(newStr)
+
         # @TODO - 콤보박스의 중복 체크
+        isFound = False
+        for dict in self.cbList:
+            searchingNo = dict["no"]
+            print("{} => {}".format(no, searchingNo))
+            if no != searchingNo:
+                otherText = dict["o"].currentText()
+                if newStr == otherText:
+                    print("중복")
+                    isFound = True
+                    break
+
+        if isFound:
+            QMessageBox.warning(self,'경고','밸브가 중복됩니다.')
+        else:
+            newIdx = no - 1
+            self.cbList[no-1]["o"].setCurrentIndex(newIdx)
+            self.cbList[no-1]["title"] = "Valve"+ str(newIdx +1)
+
 
     # On 스핀박스 Value Changed
     def onSpboxChanged(self, no):
         oSpbox = self.spboxList[no-1]
 
     # On 밸브버튼 Clicked
-    def onBtnClicked(self, title, no):
+    def onBtnClicked(self, no):
+        self.printLine(no)
+
+    # 배관 선 색깔 표시
+    def printLine(self, no):
         targetDictBtn = None
         targetIsOpen = False
         targetBtn = None
@@ -328,7 +372,7 @@ class MainWindow(QMainWindow):
             targetLineList = self.manualLineList
 
         targetIsOpen = targetDictBtn["isOpen"]
-
+        
         color = "red"
         # 열려 있으면, 닫을 거라서, 파->빨 , 빨->파 로 바꿈
         if targetIsOpen:
@@ -368,11 +412,13 @@ class MainWindow(QMainWindow):
             oBtn.setText("활성화")
             oBtn.setStyleSheet("background-color : green;")
             self.btnEnableList[no-1]["isEnable"] = True
+        
+        cbIdx = int(self.cbList[no-1]["o"].currentText()[-1:])
+        self.printLine(cbIdx)
 
     # 매초 call
     def printClock(self):
         strTime = getNow()
-        # print(strTime)
         self.lblTime.setText(strTime)
         
         for idx, spbox in enumerate(self.spboxList):
@@ -389,6 +435,8 @@ class MainWindow(QMainWindow):
                 if spboxNo == 0:
                     oBtn.setText("비활성화")
                     oBtn.setStyleSheet("background-color : orange;")
+                    newIdx = int(self.cbList[idx]["o"].currentText()[-1:])
+                    self.printLine(newIdx)
 
         # 1초 마다 time tick
         tClock =  threading.Timer(1, self.printClock)

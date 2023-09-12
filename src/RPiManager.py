@@ -52,7 +52,7 @@ class Comm:
         self.spi.open(0,0)
         self.spi.max_speed_hz = 1000000
         self.spi.bits_per_word = 8
-
+        
         # SPI 통신에서 수신을 위한 thread
         tSpi = threading.Thread(target=self.waitInput, args=())
         tSpi.daemon=True
@@ -93,7 +93,7 @@ class Comm:
             while True:
                 # SPI 입력
                 self.readSPI(self.ch0)
-                self.readSPI(self.ch1)
+                # self.readSPI(self.ch1)
                 time.sleep(self.waitTime)
         except KeyboardInterrupt:
             pass
