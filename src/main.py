@@ -15,6 +15,8 @@ class MainWindow(QMainWindow):
         self.initUI()
         self.printClock()
 
+        self.setSchedule()
+
         # 라즈베리파이 관련 인스턴스
         self.rpiUtil = RPiManager.Comm(self)
 
@@ -22,21 +24,23 @@ class MainWindow(QMainWindow):
     def setSchedule(self):
         unitFactor = {"h":3600, "m":60, "s":1}
 
-        defaultSchedule = [
-            {"no":1, "valve":4, "period":"1m", "isSequence":False},
-            {"no":2, "valve":1, "period":"10s", "isSequence":True},
-            {"no":3, "valve":2, "period":"15s", "isSequence":True},
-            {"no":4, "valve":3, "period":"20s", "isSequence":True},
-            {"no":5, "valve":5, "period":"30s", "isSequence":False}
+        self.sequenceQue = [
+            {"no":1, "valve":4, "period":"1m", "remain":60, "isSequence":False},
+            {"no":2, "valve":1, "period":"10s", "remain":10, "isSequence":True},
+            {"no":3, "valve":2, "period":"15s", "remain":15, "isSequence":True},
+            {"no":4, "valve":3, "period":"20s", "remain":20, "isSequence":True},
+            {"no":5, "valve":5, "period":"30s", "remain":30, "isSequence":False}
         ]
 
-        for dSchedule in self.defaultSchedule:
+        for dSchedule in self.sequenceQue:
             valveNo = int(dSchedule["valve"])
+            print(dSchedule["period"][-1:])
             unitFactor = unitFactor[dSchedule["period"][-1:]]
+            print(">>>", unitFactor)
             nTime = dSchedule["period"][:-1]
             period = nTime * unitFactor
             idx = dSchedule["no"]-1
-    
+            
     # UI 초기화
     def initUI(self):
         self.oImg = {
@@ -423,6 +427,14 @@ class MainWindow(QMainWindow):
         strTime = getNow()
         self.lblTime.setText(strTime)
         
+        self.checkBtnActive()
+
+        # 1초 마다 time tick
+        tClock =  threading.Timer(1, self.printClock)
+        tClock.daemon = True
+        tClock.start()
+
+    def checkBtnActive(self):
         for idx, spbox in enumerate(self.spboxList):
             jBtn = self.btnEnableList[idx]
             oBtn = jBtn["o"]
@@ -439,11 +451,6 @@ class MainWindow(QMainWindow):
                     oBtn.setStyleSheet("background-color : orange;")
                     newIdx = int(self.cbList[idx]["o"].currentText()[-1:])
                     self.printLine(newIdx)
-
-        # 1초 마다 time tick
-        tClock =  threading.Timer(1, self.printClock)
-        tClock.daemon = True
-        tClock.start()
 
     # spi 통신결과 받으면,
     def onRecvResult(self, o):
