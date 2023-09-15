@@ -16,7 +16,7 @@ class MainWindow(QMainWindow):
         self.printClock()
 
         # 라즈베리파이 관련 인스턴스
-        self.rpiUtil = RPiManager.init(self)
+        self.rpiUtil = RPiManager.Comm(self)
 
     # 임시
     def setSchedule(self):
@@ -399,7 +399,7 @@ class MainWindow(QMainWindow):
             targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(targetDictBtn["img"], color))
             targetLineList[10-1]["o"].setStyleSheet("background-color:{};".format(color))
 
-        self.rpiUtil.setPinOutput(no, not targetIsOpen)
+        self.rpiUtil.setOutput(no, not targetIsOpen)
         targetDictBtn["isOpen"] = not targetIsOpen
 
     # On 활성화/비활성화 Button Clicked

@@ -3,8 +3,6 @@ import RPi.GPIO as GPIO
 import spidev
 import time
 
-comm = None
-
 class Comm:
     # GPIO input pin list
     inputPinList = []
@@ -67,6 +65,19 @@ class Comm:
     def setPinOutput(self, nPin, level):
         GPIO.output(nPin, level)
 
+    # 번호에 따른 출력
+    def setOutput(self, no, isHigh):
+        try:
+            output = GPIO.LOW
+            if isHigh:
+                output = GPIO.HIGH
+            else:
+                output = GPIO.LOW
+
+            self.setPinOutput(self.outputPinList[no-1], output)
+        except Exception as e:
+            print(e)
+
     # SPI 통신 read
     def readSPI(self, ch):
         try:
@@ -97,19 +108,3 @@ class Comm:
                 time.sleep(self.waitTime)
         except KeyboardInterrupt:
             pass
-
-def init(win):
-    global comm
-    comm = Comm(win)
-
-def setOutput(no, isHigh):
-    try:
-        output = GPIO.LOW
-        if isHigh:
-            output = GPIO.HIGH
-        else:
-            output = GPIO.LOW
-
-        comm.setPinOutput(comm.outputPinList[no-1], output)
-    except Exception as e:
-        print(e)
