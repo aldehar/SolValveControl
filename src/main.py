@@ -383,6 +383,7 @@ class MainWindow(QMainWindow):
         if no == 1:
             targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(targetDictBtn["img"], color))
             targetLineList[1-1]["o"].setStyleSheet("background-color:{};".format(color))
+            
         elif no == 2:
             targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(targetDictBtn["img"], color))
             targetLineList[3-1]["o"].setStyleSheet("background-color:{};".format(color))
@@ -398,6 +399,7 @@ class MainWindow(QMainWindow):
             targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(targetDictBtn["img"], color))
             targetLineList[10-1]["o"].setStyleSheet("background-color:{};".format(color))
 
+        self.rpiUtil.setPinOutput(no, not targetIsOpen)
         targetDictBtn["isOpen"] = not targetIsOpen
 
     # On 활성화/비활성화 Button Clicked

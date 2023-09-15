@@ -102,16 +102,14 @@ def init(win):
     global comm
     comm = Comm(win)
 
-def setOutput(no):
-    if no == 1:
-        pass
-        #comm.setPinOutput()
-    elif no == 2:
-        pass
-    elif no == 3:
-        pass
-    elif no == 4:
-        pass
-    elif no == 5:
-        pass
-    
+def setOutput(no, isHigh):
+    try:
+        output = GPIO.LOW
+        if isHigh:
+            output = GPIO.HIGH
+        else:
+            output = GPIO.LOW
+
+        comm.setPinOutput(comm.outputPinList[no-1], output)
+    except Exception as e:
+        print(e)
