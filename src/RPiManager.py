@@ -7,7 +7,7 @@ class Comm:
     # GPIO input pin list
     inputPinList = []
     # GPIO output pin list[BCM]
-    outputPinList = [17, 27, 22, 23, 24]
+    outputPinList = [17, 27, 22, 23, 24, 25]
 
     spi = None
     ch0 = 0x00
@@ -30,11 +30,12 @@ class Comm:
         ##########################
         # BCM => BOARD
         ##########################
-        # GPIO 17 => 11
-        # GPIO 27 => 13
-        # GPIO 22 => 15
-        # GPIO 23 => 16
-        # GPIO 24 => 18
+        # GPIO 17 => 11 - Valve 1
+        # GPIO 27 => 13 - Valve 2
+        # GPIO 22 => 15 - Valve 3
+        # GPIO 23 => 16 - Vavle 4
+        # GPIO 24 => 18 - Valve 5
+        # GPIO 24 => 18 - Motor
         ##########################
         for nPin in self.inputPinList:
             GPIO.setup(nPin, GPIO.IN)
@@ -53,7 +54,7 @@ class Comm:
         
         # SPI 통신에서 수신을 위한 thread
         tSpi = threading.Thread(target=self.waitInput, args=())
-        tSpi.daemon=True
+        tSpi.daemon = True
         tSpi.start()
 
     # 모든 출력 핀 세팅

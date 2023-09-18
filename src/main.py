@@ -1,6 +1,7 @@
 import sys
 import datetime
 import threading
+import copy
 from functools import partial
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel,QSpinBox, QComboBox, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea, QMessageBox
 from PyQt5.QtGui import *
@@ -32,19 +33,22 @@ class MainWindow(QMainWindow):
 
     # 초기 시간 설정
     def setSchedule(self):
-        unitFactor = {"h":3600, "m":60, "s":1}
+        self.unitFactor = {"h":3600, "m":60, "s":1}
 
         self.initQueue = [
-            {"no":1, "valve":4, "period":"1m", "remain":60, "isSequence":False},
-            {"no":2, "valve":1, "period":"10s", "remain":10, "isSequence":True},
-            {"no":3, "valve":2, "period":"15s", "remain":15, "isSequence":True},
-            {"no":4, "valve":3, "period":"20s", "remain":20, "isSequence":True},
-            {"no":5, "valve":5, "period":"30s", "remain":30, "isSequence":False}
+            {"no":1, "valve":4, "period":"1m", "remain":60, "isSeq":False},
+            {"no":2, "valve":1, "period":"10s", "remain":10, "isSeq":True},
+            {"no":3, "valve":2, "period":"15s", "remain":15, "isSeq":True},
+            {"no":4, "valve":3, "period":"20s", "remain":20, "isSeq":True},
+            {"no":5, "valve":5, "period":"30s", "remain":30, "isSeq":False}
         ]
+
+        # 초기 큐의 값만 복사
+        self.taskQueue = copy.deepcopy(self.initQueue)
 
         for dSchedule in self.initQueue:
             valveNo = int(dSchedule["valve"])
-            factor = unitFactor[dSchedule["period"][-1:]]
+            factor = self.unitFactor[dSchedule["period"][-1:]]
             nTime = int(dSchedule["period"][:-1])
             period = nTime * factor
             idx = dSchedule["no"]-1
@@ -151,13 +155,14 @@ class MainWindow(QMainWindow):
             lbl["o"].move(lbl["x"], lbl["y"])
             lbl["o"].resize(lbl["w"], lbl["h"])
 
-        # 밸브 버튼(NOP)
+        # 밸브 버튼
         self.btnList = [
             {"no":1, "o":None, "title":"1", "isOpen":False, "x":290, "y":80, "w":55,"h":60, "img":self.oImg["valve"]},
             {"no":2, "o":None, "title":"2", "isOpen":False, "x":440, "y":75, "w":55,"h":60, "img":self.oImg["valve"]},
             {"no":3, "o":None, "title":"3", "isOpen":False, "x":440, "y":165, "w":55,"h":60, "img":self.oImg["valve"]},
             {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":55,"h":60, "img":self.oImg["valve"]},
-            {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":55,"h":60, "img":self.oImg["valve"]}
+            {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":55,"h":60, "img":self.oImg["valve"]},
+            {"no":6, "o":None, "title":"M", "isOpen":False, "x":140, "y":165, "w":55,"h":60, "img":self.oImg["valve"]}
         ]
         
         for btn in self.btnList:
@@ -397,7 +402,6 @@ class MainWindow(QMainWindow):
         if no == 1:
             targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(targetDictBtn["img"], color))
             targetLineList[1-1]["o"].setStyleSheet("background-color:{};".format(color))
-            
         elif no == 2:
             targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(targetDictBtn["img"], color))
             targetLineList[3-1]["o"].setStyleSheet("background-color:{};".format(color))
@@ -412,7 +416,12 @@ class MainWindow(QMainWindow):
         elif no == 5:
             targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(targetDictBtn["img"], color))
             targetLineList[10-1]["o"].setStyleSheet("background-color:{};".format(color))
-
+        elif no == 6:
+            targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(targetDictBtn["img"], color))
+            targetLineList[5-1]["o"].setStyleSheet("background-color:{};".format(color))
+            targetLineList[8-1]["o"].setStyleSheet("background-color:{};".format(color))
+            targetLineList[9-1]["o"].setStyleSheet("background-color:{};".format(color))
+            
         self.rpiUtil.setOutput(no, not targetIsOpen)
         targetDictBtn["isOpen"] = not targetIsOpen
 
@@ -455,7 +464,28 @@ class MainWindow(QMainWindow):
                     oBtn.setText("비활성화")
                     oBtn.setStyleSheet("background-color : orange;")
                     newIdx = int(self.cbList[idx]["o"].currentText()[-1:])
+                    # 현재 밸브 처리(GUI-선색깔, GPIO)
                     self.printLine(newIdx)
+                    # 0초 되면, 다음걸로 넘어가기
+                    self.nextValve()
+
+    # 다음 밸브처리
+    def nextValve(self):
+        if self.taskQueue.count > 0:
+            nowTask = self.taskQueue.pop(0)
+            valveNo = int(nowTask["valve"])
+            factor = self.unitFactor[nowTask["period"][-1:]]
+            nTime = int(nowTask["period"][:-1])
+            period = nTime * factor
+            isSeq = nowTask["isSeq"]
+            idx = nowTask["no"]-1
+        else:
+            # task queue가 없다면, 정지
+            pass
+        
+        #self.cbList[idx]["o"].setCurrentIndex(valveNo-1)
+        #self.cbList[idx]["title"] = str(valveNo)
+        #self.spboxList[idx]["o"].setValue(int(period))
 
     # spi 통신결과 받으면,
     def onRecvResult(self, o):
