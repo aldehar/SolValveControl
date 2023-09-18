@@ -13,8 +13,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUI()
-        self.printClock()
-
+        self.setTimer()
         self.setSchedule()
 
         # 라즈베리파이 관련 인스턴스
@@ -23,6 +22,13 @@ class MainWindow(QMainWindow):
         # 중복 체크
         for cb in self.cbList:
             cb["o"].currentIndexChanged.connect(partial(self.onCbChanged, cb["no"]))
+
+    # 1초 타이머 세팅
+    def setTimer(self):
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.printClock)
+        self.timer.start(1000)
+        self.printClock()
 
     # 초기 시간 설정
     def setSchedule(self):
@@ -44,6 +50,7 @@ class MainWindow(QMainWindow):
             idx = dSchedule["no"]-1
             
             self.cbList[idx]["o"].setCurrentIndex(valveNo-1)
+            self.cbList[idx]["title"] = str(valveNo)
             self.spboxList[idx]["o"].setValue(int(period))
             
     # UI 초기화
@@ -350,8 +357,8 @@ class MainWindow(QMainWindow):
         if isFound:
             # QMessageBox.warning(self,'경고','밸브가 중복됩니다.')
             pass
-
-        self.cbList[no-1]["title"] = str(no)
+        
+        self.cbList[no-1]["title"] = self.cbList[no-1]["o"].currentIndex()+1
 
     # On 스핀박스 Value Changed
     def onSpboxChanged(self, no):
@@ -431,11 +438,6 @@ class MainWindow(QMainWindow):
         self.lblTime.setText(strTime)
         
         self.checkBtnActive()
-
-        # 1초 마다 time tick
-        tClock =  threading.Timer(1, self.printClock)
-        tClock.daemon = True
-        tClock.start()
 
     def checkBtnActive(self):
         for idx, spbox in enumerate(self.spboxList):
