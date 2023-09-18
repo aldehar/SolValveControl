@@ -20,11 +20,15 @@ class MainWindow(QMainWindow):
         # 라즈베리파이 관련 인스턴스
         self.rpiUtil = RPiManager.Comm(self)
 
-    # 임시
+        # 중복 체크
+        for cb in self.cbList:
+            cb["o"].currentIndexChanged.connect(partial(self.onCbChanged, cb["no"]))
+
+    # 초기 시간 설정
     def setSchedule(self):
         unitFactor = {"h":3600, "m":60, "s":1}
 
-        self.sequenceQue = [
+        self.initQueue = [
             {"no":1, "valve":4, "period":"1m", "remain":60, "isSequence":False},
             {"no":2, "valve":1, "period":"10s", "remain":10, "isSequence":True},
             {"no":3, "valve":2, "period":"15s", "remain":15, "isSequence":True},
@@ -32,14 +36,15 @@ class MainWindow(QMainWindow):
             {"no":5, "valve":5, "period":"30s", "remain":30, "isSequence":False}
         ]
 
-        for dSchedule in self.sequenceQue:
+        for dSchedule in self.initQueue:
             valveNo = int(dSchedule["valve"])
-            print(dSchedule["period"][-1:])
-            unitFactor = unitFactor[dSchedule["period"][-1:]]
-            print(">>>", unitFactor)
-            nTime = dSchedule["period"][:-1]
-            period = nTime * unitFactor
+            factor = unitFactor[dSchedule["period"][-1:]]
+            nTime = int(dSchedule["period"][:-1])
+            period = nTime * factor
             idx = dSchedule["no"]-1
+            
+            self.cbList[idx]["o"].setCurrentIndex(valveNo-1)
+            self.spboxList[idx]["o"].setValue(int(period))
             
     # UI 초기화
     def initUI(self):
@@ -173,10 +178,10 @@ class MainWindow(QMainWindow):
 
         # 콤보박스
         self.cbList = [
-            {"no":1, "o":None, "title":"4", "x":25, "y":450, "w":75,"h":20},
-            {"no":2, "o":None, "title":"1", "x":125, "y":450, "w":75,"h":20},
-            {"no":3, "o":None, "title":"2", "x":225, "y":450, "w":75,"h":20},
-            {"no":4, "o":None, "title":"3", "x":325, "y":450, "w":75,"h":20},
+            {"no":1, "o":None, "title":"1", "x":25, "y":450, "w":75,"h":20},
+            {"no":2, "o":None, "title":"2", "x":125, "y":450, "w":75,"h":20},
+            {"no":3, "o":None, "title":"3", "x":225, "y":450, "w":75,"h":20},
+            {"no":4, "o":None, "title":"4", "x":325, "y":450, "w":75,"h":20},
             {"no":5, "o":None, "title":"5", "x":425, "y":450, "w":75,"h":20}
         ]
         
@@ -189,8 +194,7 @@ class MainWindow(QMainWindow):
             cb["o"].addItem("Valve 5")
             cb["o"].move(cb["x"], cb["y"])
             cb["o"].resize(cb["w"], cb["h"])
-            cb["o"].setCurrentIndex(int(cb["title"])-1)
-            cb["o"].currentIndexChanged.connect(partial(self.onCbChanged, cb["no"]))
+            #cb["o"].setCurrentIndex(int(cb["title"])-1)
         
         # 밸브 선택 스핀박스
         self.spboxList = [
@@ -207,7 +211,7 @@ class MainWindow(QMainWindow):
             spbox["o"].resize(spbox["w"], spbox["h"])
             spbox["o"].valueChanged.connect(partial(self.onSpboxChanged, spbox["no"]))
 
-        # 밸브 선택 스핀박스
+        # 밸브 초 라벨
         self.timeLblList = [
             {"no": 1, "o":None, "title":"초", "x":100, "y":475, "w":20,"h":20},
             {"no": 2, "o":None, "title":"초", "x":200, "y":475, "w":20,"h":20},
@@ -332,23 +336,22 @@ class MainWindow(QMainWindow):
 
         # @TODO - 콤보박스의 중복 체크
         isFound = False
-        for dict in self.cbList:
-            searchingNo = dict["no"]
-            print("{} => {}".format(no, searchingNo))
+        for dictCb in self.cbList:
+            searchingNo = dictCb["no"]-1
+            # 현재 no가 아니라면, (다른 cb의 no)
             if no != searchingNo:
-                otherText = dict["o"].currentText()
+                otherText = dictCb["o"].currentText()
+                print(">> 중복 {} ===> {}".format(otherText, newStr))
                 if newStr == otherText:
-                    print("중복")
+                    #print("중복")
                     isFound = True
                     break
 
         if isFound:
-            QMessageBox.warning(self,'경고','밸브가 중복됩니다.')
-        else:
-            newIdx = no - 1
-            self.cbList[no-1]["o"].setCurrentIndex(newIdx)
-            self.cbList[no-1]["title"] = "Valve"+ str(newIdx +1)
+            # QMessageBox.warning(self,'경고','밸브가 중복됩니다.')
+            pass
 
+        self.cbList[no-1]["title"] = str(no)
 
     # On 스핀박스 Value Changed
     def onSpboxChanged(self, no):
