@@ -46,7 +46,7 @@ class Comm:
 
     # SPI 통신 초기화
     def initSPI(self):
-        self.spi=spidev.SpiDev()
+        self.spi = spidev.SpiDev()
         # (bus, device)
         self.spi.open(0,0)
         self.spi.max_speed_hz = 1000000

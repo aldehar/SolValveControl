@@ -36,13 +36,17 @@ class MainWindow(QMainWindow):
         self.unitFactor = {"h":3600, "m":60, "s":1}
 
         self.initQueue = [
-            {"no":1, "valve":4, "period":"3s", "remain":3, "isSeq":False},
-            {"no":2, "valve":1, "period":"2s", "remain":2, "isSeq":True},
-            {"no":3, "valve":2, "period":"3s", "remain":3, "isSeq":True},
-            {"no":4, "valve":3, "period":"2s", "remain":2, "isSeq":True},
-            {"no":5, "valve":5, "period":"4s", "remain":4, "isSeq":False}
+            {"no":1, "valve":4, "period":"3s", "remain":3},
+            {"no":2, "valve":1, "period":"2s", "remain":2},
+            {"no":3, "valve":2, "period":"3s", "remain":3},
+            {"no":4, "valve":3, "period":"2s", "remain":2},
+            {"no":5, "valve":5, "period":"4s", "remain":4}
         ]
 
+        self.resetQueue(False)
+
+    # 큐 리셋
+    def resetQueue(self, isIncludeFirst):
         # 초기 큐의 값만 복사
         self.taskQueue = copy.deepcopy(self.initQueue)
 
@@ -57,8 +61,9 @@ class MainWindow(QMainWindow):
             self.cbList[idx]["title"] = str(valveNo)
             self.spboxList[idx]["o"].setValue(int(period))
         
-        # 제일앞에껄 제거한다.(활성화시, 제일 처음 밸브가 2번 실행되는 것 방지)
-        self.taskQueue.pop(0)
+        if not isIncludeFirst:
+            # 제일앞에껄 제거한다.(활성화시, 제일 처음 밸브가 2번 실행되는 것 방지)
+            self.taskQueue.pop(0)
 
     # UI 초기화
     def initUI(self):
@@ -66,8 +71,9 @@ class MainWindow(QMainWindow):
             "on":"res/imgs/on.png",
             "off":"res/imgs/off.png",
             "bg":"res/imgs/printing1.png",
-            "valve":"res/imgs/printing2.png",
-            "pump":"res/imgs/pump.png"
+            "pump":"res/imgs/pump.png",
+            "valve_on":"res/imgs/valve_on.png",
+            "valve_off":"res/imgs/valve_off.png"
         }
 
         self.mainLayout = QVBoxLayout()
@@ -122,12 +128,12 @@ class MainWindow(QMainWindow):
         # 압력 게이지
         self.pressure = QLabel("-", self.autoPage)
         self.pressure.move(210, 124)
-        self.pressure.resize(250, 50)
+        self.pressure.resize(300, 50)
         
         #선
         self.lineList = [
-            {"no":1, "o":None, "title":"1", "x":255, "y":125, "w":90,"h":5},
-            {"no":2, "o":None, "title":"2", "x":345, "y":125, "w":120,"h":5},
+            {"no":1, "o":None, "title":"1", "x":255, "y":125, "w":85,"h":5},
+            {"no":2, "o":None, "title":"2", "x":340, "y":125, "w":125,"h":5},
             {"no":3, "o":None, "title":"3", "x":495, "y":125, "w":45,"h":5},
             {"no":4, "o":None, "title":"4", "x":375, "y":130, "w":5,"h":90},
             {"no":5, "o":None, "title":"5", "x":180, "y":215, "w":110,"h":5},
@@ -143,7 +149,7 @@ class MainWindow(QMainWindow):
             lblLine["o"].setText(lblLine["title"])
             lblLine["o"].move(lblLine["x"], lblLine["y"])
             lblLine["o"].resize(lblLine["w"], lblLine["h"])
-            lblLine["o"].setStyleSheet("background-color:red;")
+            lblLine["o"].setStyleSheet("background-color:blue;")
         
         # 라벨
         self.labelList = [
@@ -161,12 +167,12 @@ class MainWindow(QMainWindow):
 
         # 밸브 버튼
         self.btnList = [
-            {"no":1, "o":None, "title":"1", "isOpen":False, "x":290, "y":80, "w":55,"h":60, "img":self.oImg["valve"], "lineList":[1]},
-            {"no":2, "o":None, "title":"2", "isOpen":False, "x":440, "y":75, "w":55,"h":60, "img":self.oImg["valve"], "lineList":[3]},
-            {"no":3, "o":None, "title":"3", "isOpen":False, "x":440, "y":165, "w":55,"h":60, "img":self.oImg["valve"], "lineList":[7]},
-            {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":55,"h":60, "img":self.oImg["valve"], "lineList":[2, 4, 6]},
-            {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":55,"h":60, "img":self.oImg["valve"], "lineList":[10]},
-            {"no":6, "o":None, "title":"M", "isOpen":False, "x":140, "y":165, "w":55,"h":60, "img":self.oImg["valve"], "lineList":[5, 8, 9]},
+            {"no":1, "o":None, "title":"1", "isOpen":False, "x":290, "y":80, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[1]},
+            {"no":2, "o":None, "title":"2", "isOpen":False, "x":445, "y":75, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[3]},
+            {"no":3, "o":None, "title":"3", "isOpen":False, "x":445, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[7]},
+            {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[2, 4, 6]},
+            {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[10]},
+            {"no":6, "o":None, "title":"M", "isOpen":False, "x":140, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[5, 8, 9]},
             {"no":7, "o":None, "title":"P", "isOpen":False, "x":210, "y":165, "w":60,"h":60, "img":self.oImg["pump"], "lineList":[]}
         ]
         
@@ -174,7 +180,7 @@ class MainWindow(QMainWindow):
             btn["o"] = QPushButton(btn["title"], self.autoPage)
             btn["o"].move(btn["x"], btn["y"])
             btn["o"].resize(btn["w"], btn["h"])
-            btn["o"].setStyleSheet("background-image : url("+ btn["img"] +");background-repeat: no-repeat; background-color:red;")
+            btn["o"].setStyleSheet("background-image : url("+ btn["img"] +");background-repeat: no-repeat; background-color:blue;")
             btn["o"].clicked.connect(partial(self.onBtnClicked, btn["no"]))
 
         # 활성화/비활성화 버튼
@@ -259,13 +265,13 @@ class MainWindow(QMainWindow):
 
         # 압력 게이지
         self.manualPressure = QLabel("-", self.manualPage)
-        self.manualPressure.move(235, 215)
-        self.manualPressure.resize(250, 50)
+        self.manualPressure.move(210, 124)
+        self.manualPressure.resize(300, 50)
 
         #선
         self.manualLineList = [
-            {"no":1, "o":None, "title":"1", "x":255, "y":125, "w":90,"h":5},
-            {"no":2, "o":None, "title":"2", "x":345, "y":125, "w":120,"h":5},
+            {"no":1, "o":None, "title":"1", "x":255, "y":125, "w":85,"h":5},
+            {"no":2, "o":None, "title":"2", "x":340, "y":125, "w":125,"h":5},
             {"no":3, "o":None, "title":"3", "x":495, "y":125, "w":45,"h":5},
             {"no":4, "o":None, "title":"4", "x":375, "y":130, "w":5,"h":90},
             {"no":5, "o":None, "title":"5", "x":180, "y":215, "w":110,"h":5},
@@ -281,7 +287,7 @@ class MainWindow(QMainWindow):
             lblLine["o"].setText(lblLine["title"])
             lblLine["o"].move(lblLine["x"], lblLine["y"])
             lblLine["o"].resize(lblLine["w"], lblLine["h"])
-            lblLine["o"].setStyleSheet("background-color:red;")
+            lblLine["o"].setStyleSheet("background-color:blue;")
         
         # 라벨
         self.manualLabelList = [
@@ -289,7 +295,7 @@ class MainWindow(QMainWindow):
             {"no":2, "o":None, "title":"#2 Sol", "x":440, "y":55, "w":55,"h":25},
             {"no":3, "o":None, "title":"#3 Sol", "x":440, "y":145, "w":55,"h":25},
             {"no":4, "o":None, "title":"#4 Sol", "x":290, "y":147, "w":55,"h":25},
-            {"no":5, "o":None, "title":"#5 Sol", "x":350, "y":235, "w":55,"h":25},
+            {"no":5, "o":None, "title":"#5 Sol", "x":350, "y":235, "w":55,"h":25}
         ]
         
         for lbl in self.manualLabelList:
@@ -297,20 +303,22 @@ class MainWindow(QMainWindow):
             lbl["o"].move(lbl["x"], lbl["y"])
             lbl["o"].resize(lbl["w"], lbl["h"])
 
-        # 밸브 버튼(NOP)
+        # 밸브 버튼
         self.manualBtnList = [
-            {"no":1, "o":None, "title":"1", "isOpen":False, "x":290, "y":80, "w":55,"h":60, "img":self.oImg["valve"]},
-            {"no":2, "o":None, "title":"2", "isOpen":False, "x":440, "y":75, "w":55,"h":60, "img":self.oImg["valve"]},
-            {"no":3, "o":None, "title":"3", "isOpen":False, "x":440, "y":165, "w":55,"h":60, "img":self.oImg["valve"]},
-            {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":55,"h":60, "img":self.oImg["valve"]},
-            {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":55,"h":60, "img":self.oImg["valve"]}
+            {"no":1, "o":None, "title":"1", "isOpen":False, "x":290, "y":80, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[1]},
+            {"no":2, "o":None, "title":"2", "isOpen":False, "x":445, "y":75, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[3]},
+            {"no":3, "o":None, "title":"3", "isOpen":False, "x":445, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[7]},
+            {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[2, 4, 6]},
+            {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[10]},
+            {"no":6, "o":None, "title":"M", "isOpen":False, "x":140, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[5, 8, 9]},
+            {"no":7, "o":None, "title":"P", "isOpen":False, "x":210, "y":165, "w":60,"h":60, "img":self.oImg["pump"], "lineList":[]}
         ]
         
         for btn in self.manualBtnList:
             btn["o"] = QPushButton(btn["title"], self.manualPage)
             btn["o"].move(btn["x"], btn["y"])
             btn["o"].resize(btn["w"], btn["h"])
-            btn["o"].setStyleSheet("background-image : url("+ btn["img"] +");background-repeat: no-repeat; background-color:red;")
+            btn["o"].setStyleSheet("background-image : url("+ btn["img"] +");background-repeat: no-repeat; background-color:blue;")
             btn["o"].clicked.connect(partial(self.onBtnClicked, btn["no"]))
 
         # 레이아웃
@@ -335,11 +343,18 @@ class MainWindow(QMainWindow):
     def onOffBtnClicked(self):
         idx = self.body.currentIndex()
 
+        # 자동모드 -> 수동모드
         if idx == 0:
             self.lblMode.setText("수동모드")
             self.btnOnOff.setStyleSheet("background-image : url({});background-repeat: no-repeat;".format(self.oImg["off"]))
             self.body.setCurrentIndex(1)
-            
+
+            # 자동모드 -> 수동모드 전환 시, 모든 밸브 정지
+            for o in self.btnList:
+                self.rpiUtil.setOutput(no=o["no"], isHigh=False)
+                o["isOpen"] = False
+
+        # 수동모드 -> 자동모드
         elif idx == 1:
             self.lblMode.setText("자동모드")
             self.btnOnOff.setStyleSheet("background-image : url({});background-repeat: no-repeat;".format(self.oImg["on"]))
@@ -349,7 +364,6 @@ class MainWindow(QMainWindow):
     def onCbChanged(self, no):
         oCbBox = self.cbList[no-1]["o"]
         newStr = oCbBox.currentText()
-        print(newStr)
 
         # @TODO - 콤보박스의 중복 체크
         isFound = False
@@ -377,6 +391,16 @@ class MainWindow(QMainWindow):
     # On 밸브버튼 Clicked
     def onBtnClicked(self, no):
         self.printLine(no)
+        
+        # 자동모드 일때만,
+        if self.body.currentIndex() == 0:
+            # 모터 버튼 클릭 시,(임시)
+            if no == 6:
+                self.resetQueue(True)
+                self.nextValve()
+            # 압력계 버튼 클릭 시,(임시)
+            elif no == 7:
+                self.resetQueue(False)
 
     # 배관 선 색깔 표시
     def printLine(self, no):
@@ -397,12 +421,12 @@ class MainWindow(QMainWindow):
 
         targetIsOpen = targetDictBtn["isOpen"]
         
-        color = "red"
+        color = "blue"
         # 열려 있으면, 닫을 거라서, 파->빨 , 빨->파 로 바꿈
         if targetIsOpen:
-            color = "red"
-        else:
             color = "blue"
+        else:
+            color = "red"
 
         # 대상에 한해서(밸브5, 모터1, 압력계)
         if no >= 1 and no <= 7:
@@ -441,6 +465,7 @@ class MainWindow(QMainWindow):
         
         self.checkBtnActive()
 
+    # 활성화/비활성화 버튼 체크
     def checkBtnActive(self):
         for idx, spbox in enumerate(self.spboxList):
             jBtn = self.btnEnableList[idx]
@@ -472,7 +497,6 @@ class MainWindow(QMainWindow):
             factor = self.unitFactor[nowTask["period"][-1:]]
             # 시간(초)
             nTime = int(nowTask["period"][:-1]) * factor
-            isSeq = nowTask["isSeq"]
             
             # 콤보박스의 번호 0 ~ 4
             idx = nowTask["no"]-1
@@ -483,12 +507,14 @@ class MainWindow(QMainWindow):
             self.btnEnableList[idx]["o"].setStyleSheet("background-color : green;")
             self.printLine(valveNo)
         else:
-            # task queue가 없다면, 정지
-            pass
+            self.resetQueue(False)
+            # 모터 토글
+            self.printLine(6)
 
     # spi 통신결과 받으면,
     def onRecvResult(self, o):
-        print(str(o))
+        # for debug
+        print("SPI >>> {}".format(str(o)))
         self.pressure.setText(str(o))
         self.manualPressure.setText(str(o))
 
