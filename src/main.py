@@ -64,8 +64,12 @@ class MainWindow(QMainWindow):
             self.spboxList[idx]["o"].setValue(int(period))
         
         if not isIncludeFirst:
-            # 제일앞에껄 제거한다.(활성화시, 제일 처음 밸브가 2번 실행되는 것 방지)
+            # 제일 앞의 것 제거 (활성화시, 제일 처음 밸브가 2번 실행되는 것 방지)
             self.taskQueue.pop(0)
+            # 제일 뒤의 것 제거
+            self.taskQueue.pop()
+            
+            print("[{}] resetQueue, {}".format(self.TAG, self.taskQueue))
 
     # UI 초기화
     def initUI(self):
@@ -408,14 +412,15 @@ class MainWindow(QMainWindow):
 
     # On 밸브버튼 Clicked
     def onBtnClicked(self, no):
-        self.printLine(no)
+        if no != 6:
+            self.printLine(no)
         
         # 자동모드 일때만,
         if self.body.currentIndex() == 0:
             # 모터 버튼 클릭 시,(임시)
             if no == 6:
                 self.resetQueue(True)
-                self.nextValve()
+                self.nextValve(no)
             # 압력계 버튼 클릭 시,(임시)
             elif no == 7:
                 self.resetQueue(False)
@@ -505,14 +510,20 @@ class MainWindow(QMainWindow):
                 if spboxNo == 0:
                     oBtn.setText("비활성화")
                     oBtn.setStyleSheet("background-color : orange;")
-                    newIdx = int(self.cbList[idx]["o"].currentText()[-1:])
+                    valveNo = int(self.cbList[idx]["o"].currentText()[-1:])
                     # 현재 밸브 처리(GUI-선색깔, GPIO)
-                    self.printLine(newIdx)
+                    self.printLine(valveNo)
                     # 0초 되면, 다음걸로 넘어가기
-                    self.nextValve()
+                    self.nextValve(valveNo)
 
     # 다음 밸브처리
-    def nextValve(self):
+    def nextValve(self, valveNo):
+        if valveNo == 4:
+            self.printLine(5)
+        elif valveNo == 5:
+            self.printLine(4)
+        
+        print("[{}] taskQueue : {}".format(self.TAG, self.taskQueue))
         # task 큐에 남아있다면, 
         if len(self.taskQueue) > 0:
             # 큐에서 하나를 꺼내서,
