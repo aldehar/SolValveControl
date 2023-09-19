@@ -35,14 +35,14 @@ class Comm:
         # GPIO 22 => 15 - Valve 3
         # GPIO 23 => 16 - Vavle 4
         # GPIO 24 => 18 - Valve 5
-        # GPIO 24 => 18 - Motor
+        # GPIO 25 => 18 - Motor
         ##########################
         for nPin in self.inputPinList:
             GPIO.setup(nPin, GPIO.IN)
         
         for nPin in self.outputPinList:
-            GPIO.setup(nPin, GPIO.OUT)
-            print("pin {} ==> set to out".format(nPin))
+            GPIO.setup(nPin, GPIO.OUT, initial=GPIO.HIGH)
+            print("pin {} ==> set to OUT, initial = GPIO.HIGH".format(nPin))
 
     # SPI 통신 초기화
     def initSPI(self):
@@ -86,14 +86,9 @@ class Comm:
             outAdc = ((read[1]&3) << 8) + read[2]
             v = round(((outAdc * 3.3) / 1023), 5)
 
-            # for checking
-            # print("[Ch {}] r:[{}], out:[{}],v:{} V".format(0, read, outAdc, v))
-            printLblList = [str(ch), str(read), str(outAdc), str(v)]
-            '''
-            for i, v in enumerate(printLblList):
-                print(i, v)
-            '''
-            self.win.onRecvResult(printLblList)
+            dictRtn = {"ch": ch, "read":read, "outAdc": outAdc, "v":v}
+
+            self.win.onRecvResult(dictRtn)
         except Exception as e:
             print("Ignore Exception cause : ", e)
 

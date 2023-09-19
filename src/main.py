@@ -36,11 +36,11 @@ class MainWindow(QMainWindow):
         self.unitFactor = {"h":3600, "m":60, "s":1}
 
         self.initQueue = [
-            {"no":1, "valve":4, "period":"1m", "remain":60, "isSeq":False},
-            {"no":2, "valve":1, "period":"10s", "remain":10, "isSeq":True},
-            {"no":3, "valve":2, "period":"15s", "remain":15, "isSeq":True},
-            {"no":4, "valve":3, "period":"20s", "remain":20, "isSeq":True},
-            {"no":5, "valve":5, "period":"30s", "remain":30, "isSeq":False}
+            {"no":1, "valve":4, "period":"3s", "remain":3, "isSeq":False},
+            {"no":2, "valve":1, "period":"2s", "remain":2, "isSeq":True},
+            {"no":3, "valve":2, "period":"3s", "remain":3, "isSeq":True},
+            {"no":4, "valve":3, "period":"2s", "remain":2, "isSeq":True},
+            {"no":5, "valve":5, "period":"4s", "remain":4, "isSeq":False}
         ]
 
         # 초기 큐의 값만 복사
@@ -56,7 +56,10 @@ class MainWindow(QMainWindow):
             self.cbList[idx]["o"].setCurrentIndex(valveNo-1)
             self.cbList[idx]["title"] = str(valveNo)
             self.spboxList[idx]["o"].setValue(int(period))
-            
+        
+        # 제일앞에껄 제거한다.(활성화시, 제일 처음 밸브가 2번 실행되는 것 방지)
+        self.taskQueue.pop(0)
+
     # UI 초기화
     def initUI(self):
         self.oImg = {
@@ -64,6 +67,7 @@ class MainWindow(QMainWindow):
             "off":"res/imgs/off.png",
             "bg":"res/imgs/printing1.png",
             "valve":"res/imgs/printing2.png",
+            "pump":"res/imgs/pump.png"
         }
 
         self.mainLayout = QVBoxLayout()
@@ -117,7 +121,7 @@ class MainWindow(QMainWindow):
 
         # 압력 게이지
         self.pressure = QLabel("-", self.autoPage)
-        self.pressure.move(235, 215)
+        self.pressure.move(210, 124)
         self.pressure.resize(250, 50)
         
         #선
@@ -157,12 +161,13 @@ class MainWindow(QMainWindow):
 
         # 밸브 버튼
         self.btnList = [
-            {"no":1, "o":None, "title":"1", "isOpen":False, "x":290, "y":80, "w":55,"h":60, "img":self.oImg["valve"]},
-            {"no":2, "o":None, "title":"2", "isOpen":False, "x":440, "y":75, "w":55,"h":60, "img":self.oImg["valve"]},
-            {"no":3, "o":None, "title":"3", "isOpen":False, "x":440, "y":165, "w":55,"h":60, "img":self.oImg["valve"]},
-            {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":55,"h":60, "img":self.oImg["valve"]},
-            {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":55,"h":60, "img":self.oImg["valve"]},
-            {"no":6, "o":None, "title":"M", "isOpen":False, "x":140, "y":165, "w":55,"h":60, "img":self.oImg["valve"]}
+            {"no":1, "o":None, "title":"1", "isOpen":False, "x":290, "y":80, "w":55,"h":60, "img":self.oImg["valve"], "lineList":[1]},
+            {"no":2, "o":None, "title":"2", "isOpen":False, "x":440, "y":75, "w":55,"h":60, "img":self.oImg["valve"], "lineList":[3]},
+            {"no":3, "o":None, "title":"3", "isOpen":False, "x":440, "y":165, "w":55,"h":60, "img":self.oImg["valve"], "lineList":[7]},
+            {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":55,"h":60, "img":self.oImg["valve"], "lineList":[2, 4, 6]},
+            {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":55,"h":60, "img":self.oImg["valve"], "lineList":[10]},
+            {"no":6, "o":None, "title":"M", "isOpen":False, "x":140, "y":165, "w":55,"h":60, "img":self.oImg["valve"], "lineList":[5, 8, 9]},
+            {"no":7, "o":None, "title":"P", "isOpen":False, "x":210, "y":165, "w":60,"h":60, "img":self.oImg["pump"], "lineList":[]}
         ]
         
         for btn in self.btnList:
@@ -399,30 +404,18 @@ class MainWindow(QMainWindow):
         else:
             color = "blue"
 
-        if no == 1:
+        # 대상에 한해서(밸브5, 모터1, 압력계)
+        if no >= 1 and no <= 7:
+            # 버튼 색깔 및 배경 변경
             targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(targetDictBtn["img"], color))
-            targetLineList[1-1]["o"].setStyleSheet("background-color:{};".format(color))
-        elif no == 2:
-            targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(targetDictBtn["img"], color))
-            targetLineList[3-1]["o"].setStyleSheet("background-color:{};".format(color))
-        elif no == 3:
-            targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(targetDictBtn["img"], color))
-            targetLineList[7-1]["o"].setStyleSheet("background-color:{};".format(color))
-        elif no == 4:
-            targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(targetDictBtn["img"], color))
-            targetLineList[2-1]["o"].setStyleSheet("background-color:{};".format(color))
-            targetLineList[4-1]["o"].setStyleSheet("background-color:{};".format(color))
-            targetLineList[6-1]["o"].setStyleSheet("background-color:{};".format(color))
-        elif no == 5:
-            targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(targetDictBtn["img"], color))
-            targetLineList[10-1]["o"].setStyleSheet("background-color:{};".format(color))
-        elif no == 6:
-            targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(targetDictBtn["img"], color))
-            targetLineList[5-1]["o"].setStyleSheet("background-color:{};".format(color))
-            targetLineList[8-1]["o"].setStyleSheet("background-color:{};".format(color))
-            targetLineList[9-1]["o"].setStyleSheet("background-color:{};".format(color))
-            
-        self.rpiUtil.setOutput(no, not targetIsOpen)
+            # 줄색깔 변경
+            lineList = targetDictBtn["lineList"]
+            for no in lineList:
+                targetLineList[no-1]["o"].setStyleSheet("background-color:{};".format(color))
+            # 켜고 끄기(밸브5, 모터1)
+            if no >= 1 and no <= 6:
+                self.rpiUtil.setOutput(no, not targetIsOpen)
+
         targetDictBtn["isOpen"] = not targetIsOpen
 
     # On 활성화/비활성화 Button Clicked
@@ -471,21 +464,27 @@ class MainWindow(QMainWindow):
 
     # 다음 밸브처리
     def nextValve(self):
-        if self.taskQueue.count > 0:
+        # task 큐에 남아있다면, 
+        if len(self.taskQueue) > 0:
+            # 큐에서 하나를 꺼내서,
             nowTask = self.taskQueue.pop(0)
             valveNo = int(nowTask["valve"])
             factor = self.unitFactor[nowTask["period"][-1:]]
-            nTime = int(nowTask["period"][:-1])
-            period = nTime * factor
+            # 시간(초)
+            nTime = int(nowTask["period"][:-1]) * factor
             isSeq = nowTask["isSeq"]
+            
+            # 콤보박스의 번호 0 ~ 4
             idx = nowTask["no"]-1
+
+            self.spboxList[idx]["o"].setValue(int(nTime))
+            self.cbList[idx]["title"] = "Valve {}".format(valveNo)
+            self.btnEnableList[idx]["o"].setText("활성화")
+            self.btnEnableList[idx]["o"].setStyleSheet("background-color : green;")
+            self.printLine(valveNo)
         else:
             # task queue가 없다면, 정지
             pass
-        
-        #self.cbList[idx]["o"].setCurrentIndex(valveNo-1)
-        #self.cbList[idx]["title"] = str(valveNo)
-        #self.spboxList[idx]["o"].setValue(int(period))
 
     # spi 통신결과 받으면,
     def onRecvResult(self, o):

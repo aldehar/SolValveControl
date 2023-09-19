@@ -9,7 +9,7 @@ BOARD = 1
 IN = 0
 OUT = 1
 
-def setup(nPin, nInOut):
+def setup(nPin, nInOut, initial):
     pass
 
 def setmode(nMode):
