@@ -11,6 +11,8 @@ from PyQt5 import QtCore
 import RPiManager
 
 class MainWindow(QMainWindow):
+    TAG = "Main"
+
     def __init__(self):
         super().__init__()
         self.initUI()
@@ -36,11 +38,11 @@ class MainWindow(QMainWindow):
         self.unitFactor = {"h":3600, "m":60, "s":1}
 
         self.initQueue = [
-            {"no":1, "valve":4, "period":"3s", "remain":3},
-            {"no":2, "valve":1, "period":"2s", "remain":2},
-            {"no":3, "valve":2, "period":"3s", "remain":3},
-            {"no":4, "valve":3, "period":"2s", "remain":2},
-            {"no":5, "valve":5, "period":"4s", "remain":4}
+            {"no":1, "valve":4, "period":"3s", "remain":3, "isSeq":False},
+            {"no":2, "valve":1, "period":"2s", "remain":2, "isSeq":True},
+            {"no":3, "valve":2, "period":"3s", "remain":3, "isSeq":True},
+            {"no":4, "valve":3, "period":"2s", "remain":2, "isSeq":False},
+            {"no":5, "valve":5, "period":"4s", "remain":4, "isSeq":False},
         ]
 
         self.resetQueue(False)
@@ -50,7 +52,7 @@ class MainWindow(QMainWindow):
         # 초기 큐의 값만 복사
         self.taskQueue = copy.deepcopy(self.initQueue)
 
-        for dSchedule in self.initQueue:
+        for dSchedule in self.taskQueue:
             valveNo = int(dSchedule["valve"])
             factor = self.unitFactor[dSchedule["period"][-1:]]
             nTime = int(dSchedule["period"][:-1])
@@ -318,7 +320,7 @@ class MainWindow(QMainWindow):
             btn["o"] = QPushButton(btn["title"], self.manualPage)
             btn["o"].move(btn["x"], btn["y"])
             btn["o"].resize(btn["w"], btn["h"])
-            btn["o"].setStyleSheet("background-image : url("+ btn["img"] +");background-repeat: no-repeat; background-color:blue;")
+            btn["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(btn["img"]))
             btn["o"].clicked.connect(partial(self.onBtnClicked, btn["no"]))
 
         # 레이아웃
@@ -354,6 +356,22 @@ class MainWindow(QMainWindow):
                 self.rpiUtil.setOutput(no=o["no"], isHigh=False)
                 o["isOpen"] = False
 
+                no = int(o["no"])
+                if no != 7:
+                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["valve_off"]))
+                else:
+                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["pump"]))
+
+            # 활성화 버튼 -> 비활성화로
+            for o in self.btnEnableList:
+                o["o"].setText("비활성화")
+                o["o"].setStyleSheet("background-color:orange;")
+                o["title"] = "비활성화"
+            
+            # 라인 off 색으로
+            for o in self.lineList:
+                o["o"].setStyleSheet("background-color:{};".format("blue"))
+
         # 수동모드 -> 자동모드
         elif idx == 1:
             self.lblMode.setText("자동모드")
@@ -372,9 +390,9 @@ class MainWindow(QMainWindow):
             # 현재 no가 아니라면, (다른 cb의 no)
             if no != searchingNo:
                 otherText = dictCb["o"].currentText()
-                print(">> 중복 {} ===> {}".format(otherText, newStr))
+                print("[{}]>> 중복 {} ===> {}".format(self.TAG, otherText, newStr))
                 if newStr == otherText:
-                    #print("중복")
+                    #print("[{}] 중복".format(self.TAG))
                     isFound = True
                     break
 
@@ -422,16 +440,22 @@ class MainWindow(QMainWindow):
         targetIsOpen = targetDictBtn["isOpen"]
         
         color = "blue"
+        strImg = "valve_off"
         # 열려 있으면, 닫을 거라서, 파->빨 , 빨->파 로 바꿈
         if targetIsOpen:
             color = "blue"
+            strImg = "valve_off"
         else:
             color = "red"
+            strImg = "valve_on"
+
+        if no == 7:
+            strImg = "pump"
 
         # 대상에 한해서(밸브5, 모터1, 압력계)
         if no >= 1 and no <= 7:
             # 버튼 색깔 및 배경 변경
-            targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(targetDictBtn["img"], color))
+            targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(self.oImg[strImg], color))
             # 줄색깔 변경
             lineList = targetDictBtn["lineList"]
             for no in lineList:
@@ -506,6 +530,12 @@ class MainWindow(QMainWindow):
             self.btnEnableList[idx]["o"].setText("활성화")
             self.btnEnableList[idx]["o"].setStyleSheet("background-color : green;")
             self.printLine(valveNo)
+
+            '''
+            isSeq = nowTask["isSeq"]
+            if isSeq == True:
+                self.nextValve()
+            '''
         else:
             self.resetQueue(False)
             # 모터 토글
@@ -514,9 +544,15 @@ class MainWindow(QMainWindow):
     # spi 통신결과 받으면,
     def onRecvResult(self, o):
         # for debug
-        print("SPI >>> {}".format(str(o)))
+        print("[{}] SPI >>> {}".format(self.TAG, str(o)))
         self.pressure.setText(str(o))
         self.manualPressure.setText(str(o))
+
+    def closeEvent(self, event):
+        print("[{}] close window...".format(self.TAG))
+        # 라즈베리파이 자원 해제
+        self.rpiUtil.release()
+        event.accept()
 
 # 현재 시간
 def getNow():

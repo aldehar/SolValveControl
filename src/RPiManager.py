@@ -4,6 +4,10 @@ import spidev
 import time
 
 class Comm:
+    TAG = "RPiManager.Comm"
+    # SPI 쓰레드 활성화 변수
+    isRunning = False
+
     # GPIO input pin list
     inputPinList = []
     # GPIO output pin list[BCM]
@@ -15,6 +19,7 @@ class Comm:
     # SPI 통신대기 시간(단위:초)
     waitTime = 0.5
 
+    # 생성자
     def __init__(self, win):
         super().__init__()
         
@@ -22,7 +27,18 @@ class Comm:
         
         self.initGPIO()
         self.initSPI()
+    
+    # 소멸자
+    def __del__(self):
+        self.release()
 
+    # 자원 해제
+    def release(self):
+        self.isRunning = False
+        GPIO.cleanup()
+        self.spi.close()
+
+    # GPIO 초기화
     def initGPIO(self):
         # GPIO.BCM or GPIO.BOARD
         GPIO.setmode(GPIO.BCM)
@@ -42,7 +58,7 @@ class Comm:
         
         for nPin in self.outputPinList:
             GPIO.setup(nPin, GPIO.OUT, initial=GPIO.HIGH)
-            print("pin {} ==> set to OUT, initial = GPIO.HIGH".format(nPin))
+            print("[{}] pin {} ==> set to OUT, initial = GPIO.HIGH".format(self.TAG, nPin))
 
     # SPI 통신 초기화
     def initSPI(self):
@@ -53,6 +69,7 @@ class Comm:
         self.spi.bits_per_word = 8
         
         # SPI 통신에서 수신을 위한 thread
+        self.isRunning = True
         tSpi = threading.Thread(target=self.waitInput, args=())
         tSpi.daemon = True
         tSpi.start()
@@ -75,9 +92,11 @@ class Comm:
             else:
                 output = GPIO.LOW
 
-            self.setPinOutput(self.outputPinList[no-1], output)
+            if no < len(self.outputPinList):
+                self.setPinOutput(self.outputPinList[no-1], output)
+
         except Exception as e:
-            print(e)
+            print("[{}] Exception cause : {}".format(self.TAG, e))
 
     # SPI 통신 read
     def readSPI(self, ch):
@@ -90,14 +109,14 @@ class Comm:
 
             self.win.onRecvResult(dictRtn)
         except Exception as e:
-            print("Ignore Exception cause : ", e)
+            print("[{}] Ignore Exception cause : {}".format(self.TAG, e))
 
         return v
         
     # SPI 통신 대기
     def waitInput(self):
         try:
-            while True:
+            while self.isRunning:
                 # SPI 입력
                 self.readSPI(self.ch0)
                 # self.readSPI(self.ch1)
