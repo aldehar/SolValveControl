@@ -14,6 +14,8 @@ class MainWindow(QMainWindow):
     TAG = "Main"
 
     def __init__(self):
+        """생성자
+        """
         super().__init__()
         self.initUI()
         self.setTimer()
@@ -22,19 +24,24 @@ class MainWindow(QMainWindow):
         # 라즈베리파이 관련 인스턴스
         self.rpiUtil = RPiManager.Comm(self)
 
-        # 중복 체크
+        # 중복 체크(UI세팅시에 넣으면, 초기 값 세팅시에 체크됨)
         for cb in self.cbList:
             cb["o"].currentIndexChanged.connect(partial(self.onCbChanged, cb["no"]))
 
     # 1초 타이머 세팅
     def setTimer(self):
+        """1초 타이머 세팅
+        """
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.printClock)
         self.timer.start(1000)
         self.printClock()
 
-    # 초기 시간 설정
+    # 초기 스케쥴 시간 설정
     def setSchedule(self):
+        """초기 스케쥴 시간 설정
+            @TODO ini 파일에서 읽어오기?
+        """
         self.unitFactor = {"h":3600, "m":60, "s":1}
 
         self.initQueue = [
@@ -49,6 +56,11 @@ class MainWindow(QMainWindow):
 
     # 큐 리셋
     def resetQueue(self, isIncludeFirst):
+        """큐 리셋
+
+        Args:
+            isIncludeFirst (bool): 처음을 포함할지?
+        """
         # 초기 큐의 값만 복사
         self.taskQueue = copy.deepcopy(self.initQueue)
 
@@ -73,6 +85,8 @@ class MainWindow(QMainWindow):
 
     # UI 초기화
     def initUI(self):
+        """UI 초기화
+        """
         self.oImg = {
             "on":"res/imgs/on.png",
             "off":"res/imgs/off.png",
@@ -202,8 +216,10 @@ class MainWindow(QMainWindow):
             btn["o"] = QPushButton(btn["title"], self.autoPage)
             btn["o"].move(btn["x"], btn["y"])
             btn["o"].resize(btn["w"], btn["h"])
-            btn["o"].setStyleSheet("background-color : orange;")
-            btn["o"].clicked.connect(partial(self.onEnableBtnClicked, btn["no"]))
+            # 비활성화 처리
+            btn["o"].setEnabled(False)
+            btn["o"].setStyleSheet("background-color : orange; color:black;")
+            #btn["o"].clicked.connect(partial(self.onEnableBtnClicked, btn["no"]))
 
         # 콤보박스
         self.cbList = [
@@ -347,6 +363,8 @@ class MainWindow(QMainWindow):
 
     # On 온/오프 버튼 clicked
     def onOffBtnClicked(self):
+        """온/오프 버튼 클릭 시, callback
+        """
         idx = self.body.currentIndex()
 
         # 자동모드 -> 수동모드
@@ -384,6 +402,11 @@ class MainWindow(QMainWindow):
 
     # On 콤보박스 index Changed
     def onCbChanged(self, no):
+        """콤보박스 index 변화시에, callback
+
+        Args:
+            no (int): 번호
+        """
         oCbBox = self.cbList[no-1]["o"]
         newStr = oCbBox.currentText()
 
@@ -408,10 +431,20 @@ class MainWindow(QMainWindow):
 
     # On 스핀박스 Value Changed
     def onSpboxChanged(self, no):
+        """스핀박스 값 변화시, callback
+
+        Args:
+            no (int): 번호
+        """
         oSpbox = self.spboxList[no-1]
 
     # On 밸브버튼 Clicked
     def onBtnClicked(self, no):
+        """밸브버튼 클릭시, callback
+
+        Args:
+            no (int): 버튼 번호
+        """
         if no != 6:
             self.printLine(no)
         
@@ -427,6 +460,11 @@ class MainWindow(QMainWindow):
 
     # 배관 선 색깔 표시
     def printLine(self, no):
+        """배관 선 색깔 표시
+
+        Args:
+            no (int): 버튼 번호
+        """
         targetDictBtn = None
         targetIsOpen = False
         targetBtn = None
@@ -457,7 +495,7 @@ class MainWindow(QMainWindow):
         if no == 7:
             strImg = "pump"
 
-        # 대상에 한해서(밸브5, 모터1, 압력계)
+        # 대상에 한해서(밸브5, 모터1)
         if no >= 1 and no <= 7:
             # 버튼 색깔 및 배경 변경
             targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(self.oImg[strImg], color))
@@ -465,14 +503,29 @@ class MainWindow(QMainWindow):
             lineList = targetDictBtn["lineList"]
             for no in lineList:
                 targetLineList[no-1]["o"].setStyleSheet("background-color:{};".format(color))
-            # 켜고 끄기(밸브5, 모터1)
-            if no >= 1 and no <= 6:
-                self.rpiUtil.setOutput(no, not targetIsOpen)
 
         targetDictBtn["isOpen"] = not targetIsOpen
 
+    # 라즈베리 파이 출력
+    def rpiOut(self, no, isOpen):
+        """라즈베리 파이 출력
+
+        Args:
+            no (int): 버튼 번호 = 1~5-밸브, 6-모터, 7-압력계 
+            isOpen (boolean): 열렸는지?
+        """
+        print("[{}] RPi Out - No : {}, IsOpen : {}".format(self.TAG, no, isOpen))
+        # 켜고 끄기(밸브5, 모터1)
+        if no >= 1 and no <= 6:
+            self.rpiUtil.setOutput(no, not isOpen)
+
     # On 활성화/비활성화 Button Clicked
     def onEnableBtnClicked(self, no):
+        """On 활성화/비활성화 Button Clicked callback
+
+        Args:
+            no (int): 번호
+        """
         oBtn = self.btnEnableList[no-1]["o"]
         isEnable = self.btnEnableList[no-1]["isEnable"]
         if isEnable:
@@ -486,9 +539,12 @@ class MainWindow(QMainWindow):
         
         cbIdx = int(self.cbList[no-1]["o"].currentText()[-1:])
         self.printLine(cbIdx)
+        self.rpiOut(cbIdx -1, isEnable)
 
     # 매초 call
     def printClock(self):
+        """매초 시간표시 등을 위해 callback
+        """
         strTime = getNow()
         self.lblTime.setText(strTime)
         
@@ -496,6 +552,8 @@ class MainWindow(QMainWindow):
 
     # 활성화/비활성화 버튼 체크
     def checkBtnActive(self):
+        """활성화/비활성화 버튼 체크
+        """
         for idx, spbox in enumerate(self.spboxList):
             jBtn = self.btnEnableList[idx]
             oBtn = jBtn["o"]
@@ -518,11 +576,19 @@ class MainWindow(QMainWindow):
 
     # 다음 밸브처리
     def nextValve(self, valveNo):
+        """ 다음 밸브처리
+
+        Args:
+            valveNo (int): 밸브 번호
+        """
+        
+        '''
         if valveNo == 4:
             self.printLine(5)
         elif valveNo == 5:
             self.printLine(4)
-        
+        '''
+
         print("[{}] taskQueue : {}".format(self.TAG, self.taskQueue))
         # task 큐에 남아있다면, 
         if len(self.taskQueue) > 0:
@@ -541,7 +607,7 @@ class MainWindow(QMainWindow):
             self.btnEnableList[idx]["o"].setText("활성화")
             self.btnEnableList[idx]["o"].setStyleSheet("background-color : green;")
             self.printLine(valveNo)
-
+            self.rpiOut(valveNo -1, isOpen=True)
             '''
             isSeq = nowTask["isSeq"]
             if isSeq == True:
@@ -554,6 +620,11 @@ class MainWindow(QMainWindow):
 
     # spi 통신결과 받으면,
     def onRecvResult(self, o):
+        """spi 통신결과 받으면, callback
+
+        Args:
+            o (dictionary): ex> {'ch': 0, 'read': [1, 128, 0], 'outAdc': 0, 'v': 0.0}
+        """
         # for debug
         print("[{}] SPI >>> {}".format(self.TAG, str(o)))
         self.pressure.setText(str(o))
@@ -567,6 +638,11 @@ class MainWindow(QMainWindow):
 
 # 현재 시간
 def getNow():
+    """현재 시간
+
+    Returns:
+        string: ex> '2023-09-20 09:28'
+    """
     now = datetime.datetime.now()
     formattedTime = now.strftime("%Y-%m-%d %H:%M:%S")
     return formattedTime
