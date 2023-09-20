@@ -195,7 +195,7 @@ class MainWindow(QMainWindow):
             {"no":3, "o":None, "title":"3", "isOpen":False, "x":445, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[7]},
             {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[2, 4, 6]},
             {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[10]},
-            {"no":6, "o":None, "title":"P", "isOpen":False, "x":140, "y":165, "w":51,"h":60, "img":self.oImg["pump_off"], "lineList":[5, 8, 9]},
+            {"no":6, "o":None, "title":"P", "isOpen":False, "x":140, "y":165, "w":51,"h":60, "img":self.oImg["pump_off"], "lineList":[5, 8, 9]}
             #{"no":7, "o":None, "title":"P", "isOpen":False, "x":210, "y":165, "w":60,"h":60, "img":self.oImg["pump"], "lineList":[]}
         ]
         
@@ -469,11 +469,29 @@ class MainWindow(QMainWindow):
         if self.isTaskRunning:
             return
         
+        # 작업 큐 초기화
+        self.taskQueue.clear()
+
+        # 콤보박스의 값을 작업 큐에 넣기
+        for idx, cb in enumerate(self.cbList):
+            oCb = cb["o"]
+            cbIdx = oCb.currentIndex()
+            # 현재 스핀박스의 값 가져오기
+            vSp = self.spboxList[idx]["o"].value()
+
+            oTemp = {}
+            oTemp["no"] = cb["no"]
+            oTemp["valve"] = cbIdx + 1
+            oTemp["period"] = str(vSp) + "s"
+            self.taskQueue.append(oTemp)
+
+        # @TODO Valve 4,5 따로 움직이게 수정
+
         # 모터 버튼 클릭 시,(임시)
         if no == 6:
             self.isTaskRunning = True
             self.printLine(no)
-            self.resetQueue(True)
+            # self.resetQueue(True)
             self.nextValve(no)
         # 압력계 버튼 클릭 시,(임시)
         elif no == 7:
@@ -509,13 +527,13 @@ class MainWindow(QMainWindow):
 
         if targetIsOpen:
             color = "blue"
-            if no == 6: #and self.body.currentIndex == 0:
+            if no == 6: #and self.body.currentIndex() == 0:
                 strImg = "pump_off"
             else:
                 strImg = "valve_off"
         else:
             color = "red"
-            if no == 6: #and self.body.currentIndex == 0:
+            if no == 6: #and self.body.currentIndex() == 0:
                 strImg = "pump_on"
             else:
                 strImg = "valve_on"
@@ -604,6 +622,7 @@ class MainWindow(QMainWindow):
 
     # 다음 밸브처리
     def nextValve(self, valveNo):
+        print(">>>>>>>>> No : {}".format(valveNo))
         """ 다음 밸브처리
 
         Args:
@@ -662,6 +681,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         Log.d(self.TAG, "close window...")
+        self.isTaskRunning = False
         # 라즈베리파이 자원 해제
         self.rpiUtil.release()
         event.accept()
