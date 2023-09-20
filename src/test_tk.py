@@ -26,7 +26,7 @@ lblClock = None
 # GPIO input pin list
 inputPinList = []
 # GPIO output pin list
-outputPinList = [17, 27, 22, 23, 24]
+outputPinList = [17, 27, 22, 23, 24, 25]
 
 # SPI
 spi = None
@@ -46,14 +46,18 @@ def initGUI():
     lblClock = tk.Label(win, text="##:##:##", font=("Arial Bold", 12))
     lblClock.place(x=125, y=15, width=200)
 
-    for i in range(0, 5):
+    for i, pin in enumerate(outputPinList):
         strIsOffBtn = ""
         if isOffList[i]:
             strIsOffBtn = "Off"
         else:
             strIsOffBtn = "On"
-
-        lbl = tk.Label(win, text="Valve "+str(i+1), font=("Arial Bold", 9))
+        
+        name = "Valve"
+        if i >= 5:
+            name = "Motor"
+            
+        lbl = tk.Label(win, text=name +" "+str(i+1), font=("Arial Bold", 9))
         lbl.place(x=50, y=50*(i+1), width=50)
 
         btn = tk.Button(win, text="GPIO {} {}".format(outputPinList[i], strIsOffBtn), bg="blue", fg="white", command=lambda no=i: onBtnClick(no))
@@ -71,27 +75,27 @@ def initGUI():
         lblList.append(lbl)
 	
     lblTimer = tk.Label(win, text="Timer", font=("Arial Bold", 11))
-    lblTimer.place(x=50, y=300)
+    lblTimer.place(x=50, y=325)
 
     for i in range(0, 5):
         lbl = tk.Label(win, text="Valve "+ str(i+1), font=("Arial Bold", 9))
-        lbl.place(x=50+75*i, y=325, width=50, height=25)
+        lbl.place(x=50+75*i, y=350, width=50, height=25)
 
     for i in range(0, 5):
         btn = tk.Button(win, text="Disable", bg="orange", fg="white", command=lambda no=i: onToggleBtnClick(no))
-        btn.place(x=50+75*i, y=350, width=50, height=25)
+        btn.place(x=50+75*i, y=375, width=50, height=25)
         btnSetList.append(btn)
 
     for i in range(0, 5):
         sv = tk.StringVar()
         sv.set("0")
         sb = tk.Spinbox(win, textvariable=sv)
-        sb.place(x=50+75*i, y=375, width=50)
+        sb.place(x=50+75*i, y=400, width=50)
         sbList.append(sb)
         svList.append(sv)
 
     win.title("Solenoid Valve Controller")
-    win.geometry("450x425+200+200")
+    win.geometry("450x450+200+200")
     win.protocol("WM_DELETE_WINDOW", onWinClose)
 
 # 윈도우 x키 눌러서 종료시, 호출
@@ -110,13 +114,13 @@ def onBtnClick(no):
         print("GPIO {} ==> Low".format(nPin))
         isOffList[no] = False
         btn.config(text="GPIO {} On".format(nPin))
-        btn.config(bg="blue")
+        btn.config(bg="red")
     else:
         GPIO.output(nPin, GPIO.HIGH)
         print("GPIO {} ==> High".format(nPin))
         isOffList[no] = True
         btn.config(text="GPIO {} Off".format(nPin))
-        btn.config(bg="red")
+        btn.config(bg="blue")
     	
     # 0.1 sec wait
     time.sleep(0.1)
@@ -149,11 +153,11 @@ def initGPIO():
         GPIO.setup(nPin, GPIO.IN)
     
     for nPin in outputPinList:
-        GPIO.setup(nPin, GPIO.OUT)
+        GPIO.setup(nPin, GPIO.OUT, initial=GPIO.HIGH)
         print("pin {} ==> set to out".format(nPin))
 
-    for i in range(0, 5):
-        isOffList.append(False)
+    for i, pin in enumerate(outputPinList):
+        isOffList.append(True)
     
 def initSPI():
     global spi
