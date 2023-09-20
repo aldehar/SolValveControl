@@ -3,6 +3,8 @@ import RPi.GPIO as GPIO
 import spidev
 import time
 
+import log as Log
+
 class Comm:
     TAG = "RPiManager.Comm"
     # SPI 쓰레드 활성화 변수
@@ -58,7 +60,7 @@ class Comm:
         
         for nPin in self.outputPinList:
             GPIO.setup(nPin, GPIO.OUT, initial=GPIO.HIGH)
-            print("[{}] pin {} ==> set to OUT, initial = GPIO.HIGH".format(self.TAG, nPin))
+            Log.d(self.TAG, "pin {} ==> set to OUT, initial = GPIO.HIGH".format(nPin))
 
     # SPI 통신 초기화
     def initSPI(self):
@@ -96,7 +98,7 @@ class Comm:
                 self.setPinOutput(self.outputPinList[no-1], output)
 
         except Exception as e:
-            print("[{}] Exception cause : {}".format(self.TAG, e))
+            Log.e(self.TAG, "setOutput() Exception cause : {}".format(e))
 
     # SPI 통신 read
     def readSPI(self, ch):
@@ -109,7 +111,7 @@ class Comm:
 
             self.win.onRecvResult(dictRtn)
         except Exception as e:
-            print("[{}] Ignore Exception cause : {}".format(self.TAG, e))
+            Log.w(self.TAG, "readSPI() Exception cause : {}".format(e))
 
         return v
         

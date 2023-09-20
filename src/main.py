@@ -9,6 +9,7 @@ from PyQt5.QtCore import Qt
 from PyQt5 import QtCore
 
 import RPiManager
+import log as Log
 
 class MainWindow(QMainWindow):
     TAG = "Main"
@@ -81,7 +82,7 @@ class MainWindow(QMainWindow):
             # 제일 뒤의 것 제거
             self.taskQueue.pop()
             
-            print("[{}] resetQueue, {}".format(self.TAG, self.taskQueue))
+            Log.d(self.TAG, self.taskQueue)
 
     # UI 초기화
     def initUI(self):
@@ -417,9 +418,8 @@ class MainWindow(QMainWindow):
             # 현재 no가 아니라면, (다른 cb의 no)
             if no != searchingNo:
                 otherText = dictCb["o"].currentText()
-                print("[{}]>> 중복 {} ===> {}".format(self.TAG, otherText, newStr))
+                Log.d(self.TAG, ">> 중복 {} ===> {}".format(otherText, newStr))
                 if newStr == otherText:
-                    #print("[{}] 중복".format(self.TAG))
                     isFound = True
                     break
 
@@ -514,7 +514,7 @@ class MainWindow(QMainWindow):
             no (int): 버튼 번호 = 1~5-밸브, 6-모터, 7-압력계 
             isOpen (boolean): 열렸는지?
         """
-        print("[{}] RPi Out - No : {}, IsOpen : {}".format(self.TAG, no, isOpen))
+        Log.d(self.TAG, "RPi Out - No : {}, IsOpen : {}".format(no, isOpen))
         # 켜고 끄기(밸브5, 모터1)
         if no >= 1 and no <= 6:
             self.rpiUtil.setOutput(no, not isOpen)
@@ -589,7 +589,7 @@ class MainWindow(QMainWindow):
             self.printLine(4)
         '''
 
-        print("[{}] taskQueue : {}".format(self.TAG, self.taskQueue))
+        Log.d(self.TAG, "taskQueue : {}".format(self.taskQueue))
         # task 큐에 남아있다면, 
         if len(self.taskQueue) > 0:
             # 큐에서 하나를 꺼내서,
@@ -626,12 +626,12 @@ class MainWindow(QMainWindow):
             o (dictionary): ex> {'ch': 0, 'read': [1, 128, 0], 'outAdc': 0, 'v': 0.0}
         """
         # for debug
-        print("[{}] SPI >>> {}".format(self.TAG, str(o)))
+        Log.d(self.TAG, "SPI >>> {}".format(str(o)))
         self.pressure.setText(str(o))
         self.manualPressure.setText(str(o))
 
     def closeEvent(self, event):
-        print("[{}] close window...".format(self.TAG))
+        Log.d(self.TAG, "close window...")
         # 라즈베리파이 자원 해제
         self.rpiUtil.release()
         event.accept()
