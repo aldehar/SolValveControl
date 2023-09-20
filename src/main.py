@@ -54,6 +54,7 @@ class MainWindow(QMainWindow):
         ]
 
         self.resetQueue(False)
+        self.isTaskRunning = False
 
     # 큐 리셋
     def resetQueue(self, isIncludeFirst):
@@ -92,7 +93,8 @@ class MainWindow(QMainWindow):
             "on":"res/imgs/on.png",
             "off":"res/imgs/off.png",
             "bg":"res/imgs/printing1.png",
-            "pump":"res/imgs/pump.png",
+            "pump_on":"res/imgs/pump_on.png",
+            "pump_off":"res/imgs/pump_off.png",
             "valve_on":"res/imgs/valve_on.png",
             "valve_off":"res/imgs/valve_off.png"
         }
@@ -193,8 +195,8 @@ class MainWindow(QMainWindow):
             {"no":3, "o":None, "title":"3", "isOpen":False, "x":445, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[7]},
             {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[2, 4, 6]},
             {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[10]},
-            {"no":6, "o":None, "title":"M", "isOpen":False, "x":140, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[5, 8, 9]},
-            {"no":7, "o":None, "title":"P", "isOpen":False, "x":210, "y":165, "w":60,"h":60, "img":self.oImg["pump"], "lineList":[]}
+            {"no":6, "o":None, "title":"P", "isOpen":False, "x":140, "y":165, "w":51,"h":60, "img":self.oImg["pump_off"], "lineList":[5, 8, 9]},
+            #{"no":7, "o":None, "title":"P", "isOpen":False, "x":210, "y":165, "w":60,"h":60, "img":self.oImg["pump"], "lineList":[]}
         ]
         
         for btn in self.btnList:
@@ -334,7 +336,7 @@ class MainWindow(QMainWindow):
             {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[2, 4, 6]},
             {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[10]},
             {"no":6, "o":None, "title":"M", "isOpen":False, "x":140, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[5, 8, 9]},
-            {"no":7, "o":None, "title":"P", "isOpen":False, "x":210, "y":165, "w":60,"h":60, "img":self.oImg["pump"], "lineList":[]}
+            {"no":7, "o":None, "title":"P", "isOpen":False, "x":210, "y":165, "w":60,"h":60, "img":self.oImg["pump_off"], "lineList":[]}
         ]
         
         for btn in self.manualBtnList:
@@ -370,6 +372,7 @@ class MainWindow(QMainWindow):
 
         # 자동모드 -> 수동모드
         if idx == 0:
+            self.isTaskRunning = False
             self.lblMode.setText("수동모드")
             self.btnOnOff.setStyleSheet("background-image : url({});background-repeat: no-repeat;".format(self.oImg["off"]))
             self.body.setCurrentIndex(1)
@@ -380,15 +383,17 @@ class MainWindow(QMainWindow):
                 o["isOpen"] = False
 
                 no = int(o["no"])
-                if no != 7:
+                if no == 6:
+                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["pump_off"]))
+                elif no != 7:
                     o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["valve_off"]))
                 else:
-                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["pump"]))
+                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["pump_off"]))
 
             # 활성화 버튼 -> 비활성화로
             for o in self.btnEnableList:
                 o["o"].setText("비활성화")
-                o["o"].setStyleSheet("background-color:orange;")
+                o["o"].setStyleSheet("background-color:orange; color:black;")
                 o["title"] = "비활성화"
             
             # 라인 off 색으로
@@ -445,18 +450,34 @@ class MainWindow(QMainWindow):
         Args:
             no (int): 버튼 번호
         """
+
         if no != 6:
             self.printLine(no)
-        
+
         # 자동모드 일때만,
         if self.body.currentIndex() == 0:
-            # 모터 버튼 클릭 시,(임시)
-            if no == 6:
-                self.resetQueue(True)
-                self.nextValve(no)
-            # 압력계 버튼 클릭 시,(임시)
-            elif no == 7:
-                self.resetQueue(False)
+            self.startTask(no)
+    
+    # 자동모드 시작
+    def startTask(self, no):
+        """자동모드 시작
+
+        Args:
+            no (int): 밸브 번호
+        """
+        # 작업 동작중 일때는 끝날때까지 안되게 수정
+        if self.isTaskRunning:
+            return
+        
+        # 모터 버튼 클릭 시,(임시)
+        if no == 6:
+            self.isTaskRunning = True
+            self.printLine(no)
+            self.resetQueue(True)
+            self.nextValve(no)
+        # 압력계 버튼 클릭 시,(임시)
+        elif no == 7:
+            self.resetQueue(False)
 
     # 배관 선 색깔 표시
     def printLine(self, no):
@@ -485,15 +506,22 @@ class MainWindow(QMainWindow):
         color = "blue"
         strImg = "valve_off"
         # 열려 있으면, 닫을 거라서, 파->빨 , 빨->파 로 바꿈
+
         if targetIsOpen:
             color = "blue"
-            strImg = "valve_off"
+            if no == 6: #and self.body.currentIndex == 0:
+                strImg = "pump_off"
+            else:
+                strImg = "valve_off"
         else:
             color = "red"
-            strImg = "valve_on"
+            if no == 6: #and self.body.currentIndex == 0:
+                strImg = "pump_on"
+            else:
+                strImg = "valve_on"
 
         if no == 7:
-            strImg = "pump"
+            strImg = "pump_off"
 
         # 대상에 한해서(밸브5, 모터1)
         if no >= 1 and no <= 7:
@@ -519,9 +547,9 @@ class MainWindow(QMainWindow):
         if no >= 1 and no <= 6:
             self.rpiUtil.setOutput(no, not isOpen)
 
-    # On 활성화/비활성화 Button Clicked
+    # On 활성화/비활성화 Button Clicked(더 이상 안씀)
     def onEnableBtnClicked(self, no):
-        """On 활성화/비활성화 Button Clicked callback
+        """On 활성화/비활성화 Button Clicked callback(더 이상 안씀)
 
         Args:
             no (int): 번호
@@ -530,11 +558,11 @@ class MainWindow(QMainWindow):
         isEnable = self.btnEnableList[no-1]["isEnable"]
         if isEnable:
             oBtn.setText("비활성화")
-            oBtn.setStyleSheet("background-color : orange;")
+            oBtn.setStyleSheet("background-color : orange; color:black;")
             self.btnEnableList[no-1]["isEnable"] = False
         elif isEnable == False:
             oBtn.setText("활성화")
-            oBtn.setStyleSheet("background-color : green;")
+            oBtn.setStyleSheet("background-color : green; color:black;")
             self.btnEnableList[no-1]["isEnable"] = True
         
         cbIdx = int(self.cbList[no-1]["o"].currentText()[-1:])
@@ -567,7 +595,7 @@ class MainWindow(QMainWindow):
 
                 if spboxNo == 0:
                     oBtn.setText("비활성화")
-                    oBtn.setStyleSheet("background-color : orange;")
+                    oBtn.setStyleSheet("background-color : orange; color : black;")
                     valveNo = int(self.cbList[idx]["o"].currentText()[-1:])
                     # 현재 밸브 처리(GUI-선색깔, GPIO)
                     self.printLine(valveNo)
@@ -590,6 +618,7 @@ class MainWindow(QMainWindow):
         '''
 
         Log.d(self.TAG, "taskQueue : {}".format(self.taskQueue))
+
         # task 큐에 남아있다면, 
         if len(self.taskQueue) > 0:
             # 큐에서 하나를 꺼내서,
@@ -605,7 +634,7 @@ class MainWindow(QMainWindow):
             self.spboxList[idx]["o"].setValue(int(nTime))
             self.cbList[idx]["title"] = "Valve {}".format(valveNo)
             self.btnEnableList[idx]["o"].setText("활성화")
-            self.btnEnableList[idx]["o"].setStyleSheet("background-color : green;")
+            self.btnEnableList[idx]["o"].setStyleSheet("background-color : green; color : black;")
             self.printLine(valveNo)
             self.rpiOut(valveNo -1, isOpen=True)
             '''
@@ -617,6 +646,7 @@ class MainWindow(QMainWindow):
             self.resetQueue(False)
             # 모터 토글
             self.printLine(6)
+            self.isTaskRunning = False
 
     # spi 통신결과 받으면,
     def onRecvResult(self, o):
