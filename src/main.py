@@ -46,11 +46,11 @@ class MainWindow(QMainWindow):
         self.unitFactor = {"h":3600, "m":60, "s":1}
 
         self.initQueue = [
-            {"no":1, "valve":4, "period":"3s", "remain":3, "isSeq":False},
-            {"no":2, "valve":1, "period":"2s", "remain":2, "isSeq":True},
-            {"no":3, "valve":2, "period":"3s", "remain":3, "isSeq":True},
-            {"no":4, "valve":3, "period":"2s", "remain":2, "isSeq":False},
-            {"no":5, "valve":5, "period":"4s", "remain":4, "isSeq":False},
+            {"no":1, "valve":4, "period":"7s", "remain":3, "isSeq":False, "parent":0},
+            {"no":2, "valve":1, "period":"2s", "remain":2, "isSeq":True, "parent":4},
+            {"no":3, "valve":2, "period":"3s", "remain":3, "isSeq":True, "parent":4},
+            {"no":4, "valve":3, "period":"2s", "remain":2, "isSeq":False, "parent":4},
+            {"no":5, "valve":5, "period":"3s", "remain":4, "isSeq":False, "parent":0}
         ]
 
         self.resetQueue(False)
@@ -467,6 +467,7 @@ class MainWindow(QMainWindow):
         """
         # 작업 동작중 일때는 끝날때까지 안되게 수정
         if self.isTaskRunning:
+            Log.w(self.TAG, "이미 작업 중 입니다.")
             return
         
         # 작업 큐 초기화
@@ -615,8 +616,10 @@ class MainWindow(QMainWindow):
                     oBtn.setText("비활성화")
                     oBtn.setStyleSheet("background-color : orange; color : black;")
                     valveNo = int(self.cbList[idx]["o"].currentText()[-1:])
-                    # 현재 밸브 처리(GUI-선색깔, GPIO)
+                    # 현재 밸브 처리(GUI-선색깔)
                     self.printLine(valveNo)
+                    # GPIO 닫기 처리
+                    self.rpiOut(valveNo -1, isOpen=False)
                     # 0초 되면, 다음걸로 넘어가기
                     self.nextValve(valveNo)
 
@@ -642,7 +645,7 @@ class MainWindow(QMainWindow):
         if len(self.taskQueue) > 0:
             # 큐에서 하나를 꺼내서,
             nowTask = self.taskQueue.pop(0)
-            valveNo = int(nowTask["valve"])
+            nowValveNo = int(nowTask["valve"])
             factor = self.unitFactor[nowTask["period"][-1:]]
             # 시간(초)
             nTime = int(nowTask["period"][:-1]) * factor
@@ -651,20 +654,25 @@ class MainWindow(QMainWindow):
             idx = nowTask["no"]-1
 
             self.spboxList[idx]["o"].setValue(int(nTime))
-            self.cbList[idx]["title"] = "Valve {}".format(valveNo)
+            self.cbList[idx]["title"] = "Valve {}".format(nowValveNo)
             self.btnEnableList[idx]["o"].setText("활성화")
             self.btnEnableList[idx]["o"].setStyleSheet("background-color : green; color : black;")
-            self.printLine(valveNo)
-            self.rpiOut(valveNo -1, isOpen=True)
+            # 현재 밸브 처리(GUI-선색깔)
+            self.printLine(nowValveNo)
+            # GPIO 열기
+            self.rpiOut(nowValveNo -1, isOpen=True)
             '''
             isSeq = nowTask["isSeq"]
             if isSeq == True:
                 self.nextValve()
             '''
+            
         else:
             self.resetQueue(False)
             # 모터 토글
             self.printLine(6)
+            # 모터 끔
+            self.rpiOut(6 -1, isOpen=False)
             self.isTaskRunning = False
 
     # spi 통신결과 받으면,
@@ -682,6 +690,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         Log.d(self.TAG, "close window...")
         self.isTaskRunning = False
+        self.timer.stop()
         # 라즈베리파이 자원 해제
         self.rpiUtil.release()
         event.accept()
