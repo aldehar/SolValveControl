@@ -83,6 +83,7 @@ class Comm:
 
     # 특정 출력 핀 세팅
     def setPinOutput(self, nPin, level):
+        Log.d(self.TAG, "setPinOutput() Pin:{}, level {}".format(nPin, level))
         GPIO.output(nPin, level)
 
     # 번호에 따른 출력
@@ -94,7 +95,7 @@ class Comm:
             else:
                 output = GPIO.LOW
 
-            if no < len(self.outputPinList):
+            if no <= len(self.outputPinList):
                 self.setPinOutput(self.outputPinList[no-1], output)
 
         except Exception as e:
