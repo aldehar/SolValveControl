@@ -180,8 +180,8 @@ def readSPI(ch):
     try:
         read = spi.xfer2([1, (8+ch)<<4, 0])
         outAdc = ((read[1]&3) << 8) + read[2]
-        v = round(((outAdc * 3.3) / 1023), 5)
-        pressure = round((v-0.3)/0.134, 3)
+        v = round(((outAdc * 3.3) / 1024), 4)
+        pressure = round((v-0.9)/0.4, 3)
 
         # for checking
         print("[Ch {}] r:[{}], out:[{}],v:{} V, pressure:{} bar".format(0, read, outAdc, v, pressure))
