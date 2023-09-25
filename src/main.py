@@ -640,6 +640,10 @@ class MainWindow(QMainWindow):
             valveNo (int): 밸브 번호
         """
 
+        # 모터 켜기
+        if valveNo == self.oIdxName["Motor"]:
+            self.rpiOut(valveNo, isOpen=True)
+
         Log.d(self.TAG, ">> taskQueue : {}".format(self.taskQueue))
 
         # task 큐에 남아있다면, 
