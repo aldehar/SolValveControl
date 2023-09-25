@@ -695,6 +695,10 @@ class MainWindow(QMainWindow):
         self.pressure.setText(txtPressure)
         self.manualPressure.setText(txtPressure)
 
+        # 압력이 1bar 이상이면, 시퀀스 시작
+        if pressure >= 1:
+            self.nextValve(6)
+            
     def closeEvent(self, event):
         Log.d(self.TAG, "close window...")
         self.isTaskRunning = False
