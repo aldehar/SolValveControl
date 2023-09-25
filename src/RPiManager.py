@@ -106,8 +106,8 @@ class Comm:
             read = self.spi.xfer2([1, (8+ch)<<4, 0])
             outAdc = ((read[1]&3) << 8) + read[2]
             v = round(((outAdc * 3.3) / 1023), 5)
-
-            dictRtn = {"ch": ch, "read":read, "outAdc": outAdc, "v":v}
+            pressure = round((v-0.3)/0.134, 3)
+            dictRtn = {"ch": ch, "read":read, "outAdc": outAdc, "v":v, "pressure":pressure}
 
             self.win.onRecvResult(dictRtn)
         except Exception as e:

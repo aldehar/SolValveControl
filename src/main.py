@@ -46,11 +46,11 @@ class MainWindow(QMainWindow):
         self.unitFactor = {"h":3600, "m":60, "s":1}
 
         self.initQueue = [
-            {"no":1, "valve":4, "period":"7s", "remain":3, "isSeq":False, "parent":0},
+            {"no":1, "valve":4, "period":"7s", "remain":7, "isSeq":False, "parent":0},
             {"no":2, "valve":1, "period":"2s", "remain":2, "isSeq":True, "parent":4},
             {"no":3, "valve":2, "period":"3s", "remain":3, "isSeq":True, "parent":4},
             {"no":4, "valve":3, "period":"2s", "remain":2, "isSeq":False, "parent":4},
-            {"no":5, "valve":5, "period":"3s", "remain":4, "isSeq":False, "parent":0}
+            {"no":5, "valve":5, "period":"3s", "remain":3, "isSeq":False, "parent":0}
         ]
 
         self.resetQueue(False)
@@ -680,12 +680,20 @@ class MainWindow(QMainWindow):
         """spi 통신결과 받으면, callback
 
         Args:
-            o (dictionary): ex> {'ch': 0, 'read': [1, 128, 0], 'outAdc': 0, 'v': 0.0}
+            o (dictionary): ex> {'ch': 0, 'read': [1, 128, 0], 'outAdc': 0, 'v': 0.0, 'pressure':}
         """
         # for debug
         Log.d(self.TAG, "SPI >>> {}".format(str(o)))
-        self.pressure.setText(str(o))
-        self.manualPressure.setText(str(o))
+        
+        pressure = o["pressure"]
+        txtPressure = ""
+        if pressure < 0:
+            txtPressure = "ERROR#0"
+        else:
+            txtPressure = "{} bar".format(pressure)
+        
+        self.pressure.setText(txtPressure)
+        self.manualPressure.setText(txtPressure)
 
     def closeEvent(self, event):
         Log.d(self.TAG, "close window...")

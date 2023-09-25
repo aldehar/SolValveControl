@@ -64,12 +64,12 @@ def initGUI():
         btn.place(x=100, y=50*(i+1), width=75)
         btnList.append(btn)
 
-    lblCaptionList = ["Channel", "Read", "OutAdc", "Voltage"]
+    lblCaptionList = ["Channel", "Read", "OutAdc", "Voltage", "Pressure"]
     for i, v in enumerate(lblCaptionList):
         lbl = tk.Label(win, text=v, font=("Arial Bold", 9))
-        lbl.place(x=200, y=50*(i+1), width=50)
+        lbl.place(x=200, y=50*(i+1), width=60)
 
-    for i in range(0, 4):
+    for i in range(0, 5):
         lbl = tk.Label(win, text="-")
         lbl.place(x=250, y=50*(i+1), width=100)
         lblList.append(lbl)
@@ -181,10 +181,11 @@ def readSPI(ch):
         read = spi.xfer2([1, (8+ch)<<4, 0])
         outAdc = ((read[1]&3) << 8) + read[2]
         v = round(((outAdc * 3.3) / 1023), 5)
+        pressure = round((v-0.3)/0.134, 3)
 
         # for checking
-        print("[Ch {}] r:[{}], out:[{}],v:{} V".format(0, read, outAdc, v))
-        printLblList = [str(ch), str(read), str(outAdc), str(v)]
+        print("[Ch {}] r:[{}], out:[{}],v:{} V, pressure:{} bar".format(0, read, outAdc, v, pressure))
+        printLblList = [str(ch), str(read), str(outAdc), str(v), str(pressure)+ " bar"]
         for i, v in enumerate(printLblList):
             lblList[i].config(text=v)
     except Exception as e:
