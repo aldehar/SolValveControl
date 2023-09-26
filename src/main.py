@@ -456,12 +456,13 @@ class MainWindow(QMainWindow):
             no (int): 버튼 번호
         """
 
-        if no != 6:
-            self.printLine(no)
-
         # 자동모드 일때만,
         if self.body.currentIndex() == self.oIdxName["MODE_AUTO"]:
             self.startTask(no)
+        # 수동모드 일때만,
+        elif self.body.currentIndex == self.oIdxName["MODE_MANUAL"]:
+            print(">>>")
+            self.printLine(no)
     
     # 자동모드 시작
     def startTask(self, no):
@@ -711,6 +712,7 @@ class MainWindow(QMainWindow):
 
         # 압력이 1bar 이상이면, 시퀀스 시작
         if pressure >= 1:
+            Log.d(self.TAG, "1 bar ↑ = {} bar".format(pressure))
             self.nextValve(self.oIdxName["Motor"])
 
     def closeEvent(self, event):
