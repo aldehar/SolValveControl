@@ -380,7 +380,7 @@ class MainWindow(QMainWindow):
             self.isTaskRunning = False
             self.lblMode.setText("수동모드")
             self.btnOnOff.setStyleSheet("background-image : url({});background-repeat: no-repeat;".format(self.oImg["off"]))
-            self.body.setCurrentIndex(1)
+            self.body.setCurrentIndex(self.oIdxName["MODE_MANUAL"])
 
             # 자동모드 -> 수동모드 전환 시, 모든 밸브 정지
             for o in self.btnList:
@@ -409,7 +409,7 @@ class MainWindow(QMainWindow):
         elif idx == self.oIdxName["MODE_MANUAL"]:
             self.lblMode.setText("자동모드")
             self.btnOnOff.setStyleSheet("background-image : url({});background-repeat: no-repeat;".format(self.oImg["on"]))
-            self.body.setCurrentIndex(0)
+            self.body.setCurrentIndex(self.oIdxName["MODE_AUTO"])
 
     # On 콤보박스 index Changed
     def onCbChanged(self, no):
@@ -455,14 +455,16 @@ class MainWindow(QMainWindow):
         Args:
             no (int): 버튼 번호
         """
+        
+        bodyIndex = self.body.currentIndex()
 
         # 자동모드 일때만,
-        if self.body.currentIndex() == self.oIdxName["MODE_AUTO"]:
+        if bodyIndex == self.oIdxName["MODE_AUTO"]:
             self.startTask(no)
         # 수동모드 일때만,
-        elif self.body.currentIndex == self.oIdxName["MODE_MANUAL"]:
-            print(">>>")
+        elif bodyIndex == self.oIdxName["MODE_MANUAL"]:
             self.printLine(no)
+            self.rpiOut(no, isOpen=True)
     
     # 자동모드 시작
     def startTask(self, no):
@@ -506,7 +508,7 @@ class MainWindow(QMainWindow):
             self.resetQueue(False)
 
     # 배관 선 색깔 표시
-    def printLine(self, no):
+    def printLine(self, no, isDontCareOpen=False):
         """배관 선 색깔 표시
 
         Args:
@@ -535,13 +537,13 @@ class MainWindow(QMainWindow):
 
         if targetIsOpen:
             color = "blue"
-            if no == self.oIdxName["Motor"]: #and self.body.currentIndex() == 0:
+            if no == self.oIdxName["Motor"]:
                 strImg = "pump_off"
             else:
                 strImg = "valve_off"
         else:
             color = "red"
-            if no == 6: #and self.body.currentIndex() == 0:
+            if no == self.oIdxName["Motor"]:
                 strImg = "pump_on"
             else:
                 strImg = "valve_on"
@@ -557,7 +559,7 @@ class MainWindow(QMainWindow):
             lineList = targetDictBtn["lineList"]
             for no in lineList:
                 targetLineList[no-1]["o"].setStyleSheet("background-color:{};".format(color))
-
+        
         targetDictBtn["isOpen"] = not targetIsOpen
 
     # 라즈베리 파이 출력
@@ -593,7 +595,7 @@ class MainWindow(QMainWindow):
         
         cbIdx = int(self.cbList[no-1]["o"].currentText()[-1:])
         self.printLine(cbIdx)
-        self.rpiOut(cbIdx, isEnable)
+        self.rpiOut(cbIdx+1, isEnable)
 
     # 매초 call
     def printClock(self):
@@ -673,13 +675,13 @@ class MainWindow(QMainWindow):
                 self.nextValve()
             '''
             if nowValveNo >= self.oIdxName["Valve1"] and nowValveNo <= self.oIdxName["Valve3"]:
-                self.printLine(4)
-                self.rpiOut(4, isOpen=True)
+                self.printLine(self.oIdxName["Valve4"])
+                self.rpiOut(self.oIdxName["Valve4"], isOpen=True)
                 self.btnEnableList[0]["o"].setText("활성화")
                 self.btnEnableList[0]["o"].setStyleSheet("background-color : green; color : black;")
             elif nowValveNo == self.oIdxName["Valve5"]:
                 self.printLine(self.oIdxName["Valve4"])
-                self.rpiOut(4, isOpen=False)
+                self.rpiOut(self.oIdxName["Valve4"], isOpen=False)
                 self.btnEnableList[0]["o"].setText("비활성화")
                 self.btnEnableList[0]["o"].setStyleSheet("background-color : orange; color : black;")
         else:
