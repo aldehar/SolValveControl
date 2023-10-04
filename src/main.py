@@ -64,6 +64,7 @@ class MainWindow(QMainWindow):
         Args:
             isIncludeFirst (bool): 처음을 포함할지?
         """
+        Log.d(self.TAG, "resetQueue() isIncludeFirst : {}".format(isIncludeFirst))
         # 초기 큐의 값만 복사
         self.taskQueue = copy.deepcopy(self.initQueue)
 
@@ -154,7 +155,7 @@ class MainWindow(QMainWindow):
         self.pressure.move(210, 124)
         self.pressure.resize(300, 50)
         
-        #선
+        #선 - 왼쪽위에서 부터 1~10
         self.lineList = [
             {"no":1, "o":None, "title":"1", "x":255, "y":125, "w":85,"h":5},
             {"no":2, "o":None, "title":"2", "x":340, "y":125, "w":125,"h":5},
@@ -170,7 +171,7 @@ class MainWindow(QMainWindow):
         
         for lblLine in self.lineList:
             lblLine["o"] = QLabel("", self.autoPage)
-            lblLine["o"].setText(lblLine["title"])
+            #lblLine["o"].setText(lblLine["title"])
             lblLine["o"].move(lblLine["x"], lblLine["y"])
             lblLine["o"].resize(lblLine["w"], lblLine["h"])
             lblLine["o"].setStyleSheet("background-color:blue;")
@@ -314,7 +315,7 @@ class MainWindow(QMainWindow):
         
         for lblLine in self.manualLineList:
             lblLine["o"] = QLabel("", self.manualPage)
-            lblLine["o"].setText(lblLine["title"])
+            #lblLine["o"].setText(lblLine["title"])
             lblLine["o"].move(lblLine["x"], lblLine["y"])
             lblLine["o"].resize(lblLine["w"], lblLine["h"])
             lblLine["o"].setStyleSheet("background-color:blue;")
@@ -473,7 +474,7 @@ class MainWindow(QMainWindow):
         Args:
             no (int): 밸브 번호
         """
-        Log.d(self.TAG, "startTask() no:{}".format(no))
+        Log.d(self.TAG, "startTask() no : {}".format(no))
 
         # 작업 동작중 일때는 끝날때까지 안되게 수정
         if self.isTaskRunning:
@@ -496,15 +497,19 @@ class MainWindow(QMainWindow):
             oTemp["period"] = str(vSp) + "s"
             if oTemp["valve"] != self.oIdxName["Valve4"]:
                 self.taskQueue.append(oTemp)
+        
+        # 초기 큐 값을 현재의 큐 값으로 세팅(1사이클 돌아도 세팅된 값으로 저장되게함)
+        self.initQueue.clear()
+        self.initQueue = copy.deepcopy(self.taskQueue)
 
         # 모터 버튼 클릭 시,(임시)
         if no == self.oIdxName["Motor"]:
             self.isTaskRunning = True
             self.printLine(no)
-            # self.resetQueue(True)
             self.nextValve(no)
         # 압력계 버튼 클릭 시,(임시)
         elif no == self.oIdxName["PressureGuage"]:
+            self.isTaskRunning = False
             self.resetQueue(False)
 
     # 배관 선 색깔 표시
@@ -548,7 +553,7 @@ class MainWindow(QMainWindow):
             else:
                 strImg = "valve_on"
 
-        if no == 7:
+        if no == self.oIdxName["PressureGuage"]:
             strImg = "pump_off"
 
         # 대상에 한해서(밸브5, 모터1)
@@ -669,13 +674,10 @@ class MainWindow(QMainWindow):
             self.printLine(nowValveNo)
             # GPIO 열기
             self.rpiOut(nowValveNo, isOpen=True)
-            '''
-            isSeq = nowTask["isSeq"]
-            if isSeq == True:
-                self.nextValve()
-            '''
+
             if nowValveNo >= self.oIdxName["Valve1"] and nowValveNo <= self.oIdxName["Valve3"]:
-                self.printLine(self.oIdxName["Valve4"])
+                if self.btnList[self.oIdxName["Valve4"]-1]["isOpen"] == False:
+                    self.printLine(self.oIdxName["Valve4"])
                 self.rpiOut(self.oIdxName["Valve4"], isOpen=True)
                 self.btnEnableList[0]["o"].setText("활성화")
                 self.btnEnableList[0]["o"].setStyleSheet("background-color : green; color : black;")
@@ -715,7 +717,7 @@ class MainWindow(QMainWindow):
         # 압력이 1bar 이상이면, 시퀀스 시작
         if pressure >= 1:
             Log.d(self.TAG, "1 bar ↑ = {} bar".format(pressure))
-            self.nextValve(self.oIdxName["Motor"])
+            self.startTask(self.oIdxName["Motor"])
 
     def closeEvent(self, event):
         Log.d(self.TAG, "close window...")
