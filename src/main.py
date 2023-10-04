@@ -54,17 +54,14 @@ class MainWindow(QMainWindow):
             {"no":5, "valve":5, "period":"3s", "remain":3, "isSeq":False, "parent":0}
         ]
 
-        self.resetQueue(False)
+        self.resetQueue()
         self.isTaskRunning = False
 
     # 큐 리셋
-    def resetQueue(self, isIncludeFirst):
+    def resetQueue(self):
         """큐 리셋
-
-        Args:
-            isIncludeFirst (bool): 처음을 포함할지?
         """
-        Log.d(self.TAG, "resetQueue() isIncludeFirst : {}".format(isIncludeFirst))
+        Log.d(self.TAG, "resetQueue()")
         # 초기 큐의 값만 복사
         self.taskQueue = copy.deepcopy(self.initQueue)
 
@@ -79,13 +76,11 @@ class MainWindow(QMainWindow):
             self.cbList[idx]["title"] = str(valveNo)
             self.spboxList[idx]["o"].setValue(int(period))
         
-        if not isIncludeFirst:
-            # 제일 앞의 것 제거 (활성화시, 제일 처음 밸브가 2번 실행되는 것 방지)
-            self.taskQueue.pop(0)
-            # 제일 뒤의 것 제거
-            self.taskQueue.pop()
-            
-            Log.d(self.TAG, self.taskQueue)
+        # 제일 뒤의 것 제거
+        self.taskQueue.pop(0)
+        self.taskQueue.pop()
+        
+        Log.d(self.TAG, ">> ".format(self.taskQueue))
 
     # UI 초기화
     def initUI(self):
@@ -406,6 +401,9 @@ class MainWindow(QMainWindow):
             for o in self.lineList:
                 o["o"].setStyleSheet("background-color:{};".format("blue"))
 
+            # 큐 초기화
+            self.resetQueue()
+
         # 수동모드 -> 자동모드
         elif idx == self.oIdxName["MODE_MANUAL"]:
             self.lblMode.setText("자동모드")
@@ -474,7 +472,7 @@ class MainWindow(QMainWindow):
         Args:
             no (int): 밸브 번호
         """
-        Log.d(self.TAG, "startTask() no : {}".format(no))
+        Log.d(self.TAG, "startTask() No : {}".format(no))
 
         # 작업 동작중 일때는 끝날때까지 안되게 수정
         if self.isTaskRunning:
@@ -510,7 +508,7 @@ class MainWindow(QMainWindow):
         # 압력계 버튼 클릭 시,(임시)
         elif no == self.oIdxName["PressureGuage"]:
             self.isTaskRunning = False
-            self.resetQueue(False)
+            self.resetQueue()
 
     # 배관 선 색깔 표시
     def printLine(self, no, isDontCareOpen=False):
@@ -687,7 +685,7 @@ class MainWindow(QMainWindow):
                 self.btnEnableList[0]["o"].setText("비활성화")
                 self.btnEnableList[0]["o"].setStyleSheet("background-color : orange; color : black;")
         else:
-            self.resetQueue(False)
+            self.resetQueue()
             # 모터 토글
             self.printLine(self.oIdxName["Motor"])
             # 모터 끔
