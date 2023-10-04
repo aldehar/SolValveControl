@@ -57,6 +57,40 @@ class MainWindow(QMainWindow):
         self.resetQueue()
         self.isTaskRunning = False
 
+    # 시간 파싱
+    def parseTime(strTime):
+        """시간 파싱
+
+        Args:
+            strTime (string): ex> 12h 34m 56s
+
+        Returns:
+            int: calculated sec
+        """
+        factorList = [
+            {"unit":"h", "factor":3600},
+            {"unit":"m", "factor":60},
+            {"unit":"s", "factor":1},
+        ]
+
+        totalTime = 0
+        idx = 0
+        for o in factorList:
+            try:
+                # h, m, s
+                nn = strTime.index(o["unit"])
+                # 00~99
+                n = int(strTime[idx:nn])
+                # 
+                nTime = n * o["factor"]
+                totalTime = totalTime + nTime
+                # unit(h,m,s) 뒤 부터 파싱
+                idx = nn + 1
+            except Exception as e:
+                Log.d("==> parseTime() Exception cause : {} ,maybe factor unit not exist in string => s = {} , o = {}".format(e, strTime, o))
+        
+        return totalTime
+
     # 큐 리셋
     def resetQueue(self):
         """큐 리셋
