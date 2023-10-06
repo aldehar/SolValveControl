@@ -749,7 +749,10 @@ class MainWindow(QMainWindow):
         # 압력이 1bar 이상이면, 시퀀스 시작
         if pressure >= 1:
             Log.d(self.TAG, "1 bar ↑ = {} bar".format(pressure))
-            self.startTask(self.oIdxName["Motor"])
+            if self.isTaskRunning == False:
+                self.startTask(self.oIdxName["Motor"])
+            else:
+                Log.d(self.TAG, "alreay runnning...!")
 
     def closeEvent(self, event):
         Log.d(self.TAG, "close window...")
