@@ -98,6 +98,7 @@ class MainWindow(QMainWindow):
         Log.d(self.TAG, "resetQueue()")
         # 초기 큐의 값만 복사
         self.taskQueue = copy.deepcopy(self.initQueue)
+        self.taskNoticeQueue = copy.deepcopy(self.taskQueue)
 
         for dSchedule in self.taskQueue:
             valveNo = int(dSchedule["valve"])
@@ -110,7 +111,7 @@ class MainWindow(QMainWindow):
             self.cbList[idx]["title"] = str(valveNo)
             self.spboxList[idx]["o"].setValue(int(period))
         
-        # 제일 뒤의 것 제거
+        # 제일 앞, 뒤의 것 제거
         self.taskQueue.pop(0)
         self.taskQueue.pop()
         
@@ -288,6 +289,8 @@ class MainWindow(QMainWindow):
             spbox["o"] = QSpinBox(self.autoPage)
             spbox["o"].move(spbox["x"], spbox["y"])
             spbox["o"].resize(spbox["w"], spbox["h"])
+            # 최대 3시간
+            spbox["o"].setRange(0, 3600*3)
             spbox["o"].valueChanged.connect(partial(self.onSpboxChanged, spbox["no"]))
             if spbox["isHidden"]:
                 spbox["o"].hide()
@@ -524,6 +527,7 @@ class MainWindow(QMainWindow):
         
         # 작업 큐 초기화
         self.taskQueue.clear()
+        self.taskNoticeQueue.clear()
 
         # 콤보박스의 값을 작업 큐에 넣기
         for idx, cb in enumerate(self.cbList):
@@ -542,6 +546,7 @@ class MainWindow(QMainWindow):
         # 초기 큐 값을 현재의 큐 값으로 세팅(1사이클 돌아도 세팅된 값으로 저장되게함)
         self.initQueue.clear()
         self.initQueue = copy.deepcopy(self.taskQueue)
+        self.taskNoticeQueue = copy.deepcopy(self.taskQueue)
 
         # 모터 버튼 클릭 시,(임시)
         if no == self.oIdxName["Motor"]:
@@ -663,16 +668,23 @@ class MainWindow(QMainWindow):
                 oBtn = jBtn["o"]
                 strBtn = oBtn.text()
                 if strBtn == "활성화":
+                    valveNo = int(self.cbList[idx]["o"].currentText()[-1:])
                     oSpbox = spbox["o"]
-                    spboxNo = int(oSpbox.value())
-                    if spboxNo > 0:
-                        spboxNo = spboxNo -1
-                        oSpbox.setValue(spboxNo)
+                    spboxValue = int(oSpbox.value())
+                    if spboxValue > 0:
+                        spboxValue = spboxValue -1
+                        oSpbox.setValue(spboxValue)
+                        # 남은 시간 저장하게 매초 넣게 수정
+                        nowValveIdx = -1
+                        if valveNo >= 1 and valveNo <= 3:
+                            nowValveIdx = idx - 1
+                        elif valveNo == 5:
+                            nowValveIdx = 3
+                        self.taskNoticeQueue[nowValveIdx]["remain"] = str(spboxValue)
 
-                    if spboxNo == 0:
+                    if spboxValue == 0:
                         oBtn.setText("비활성화")
                         oBtn.setStyleSheet("background-color : orange; color : black;")
-                        valveNo = int(self.cbList[idx]["o"].currentText()[-1:])
                         # 현재 밸브 처리(GUI-선색깔)
                         self.printLine(valveNo)
                         # GPIO 닫기 처리
@@ -734,6 +746,18 @@ class MainWindow(QMainWindow):
             # 모터 끔
             self.rpiOut(self.oIdxName["Motor"], isOpen=False)
             self.isTaskRunning = False
+
+    # 현재 밸브의 상태를 리턴
+    def getValveStatus(self):
+        """ 현재 밸브의 상태 리턴
+        Return
+            status(Dictonary) : d["taskQueue"], d["taskNoticeQueue"]
+        """
+        status = {
+            "taskQueue" : self.taskQueue(),
+            "taskNoticeQueue" : self.taskNoticeQueue()
+        }
+        return status
 
     # spi 통신결과 받으면,
     def onRecvResult(self, o):
