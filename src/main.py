@@ -500,16 +500,18 @@ class MainWindow(QMainWindow):
         # 수동모드 일때만,
         elif bodyIndex == self.oIdxName["MODE_MANUAL"]:
             # 자기 밸브 처리
+            isOpen = self.manualBtnList[no-1]["isOpen"]
+            # toggle
+            self.rpiOut(no, not isOpen)
             self.printLine(no)
-            self.rpiOut(no, isOpen=True)
 
             # 4,5번 밸브의 경우, 서로 끄게 처리
             if no == self.oIdxName["Valve4"]:
                 self.printLine(self.oIdxName["Valve5"])
-                self.rpiOut(self.oIdxName["Valve5"], isOpen=False)
+                self.rpiOut(self.oIdxName["Valve5"], isOpen=isOpen)
             elif no == self.oIdxName["Valve5"]:
                 self.printLine(self.oIdxName["Valve4"])
-                self.rpiOut(self.oIdxName["Valve4"], isOpen=False)
+                self.rpiOut(self.oIdxName["Valve4"], isOpen=isOpen)
     
     # 자동모드 시작
     def startTask(self, no):
