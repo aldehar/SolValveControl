@@ -59,7 +59,7 @@ class Comm:
             GPIO.setup(nPin, GPIO.IN)
         
         for nPin in self.outputPinList:
-            GPIO.setup(nPin, GPIO.OUT, initial=GPIO.HIGH)
+            GPIO.setup(nPin, GPIO.OUT, initial=GPIO.LOW)
             Log.d(self.TAG, "pin {} ==> set to OUT, initial = GPIO.HIGH".format(nPin))
 
     # SPI 통신 초기화
