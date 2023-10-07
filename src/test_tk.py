@@ -110,13 +110,13 @@ def onBtnClick(no):
     btn = btnList[no]
     isOff = isOffList[no]
     if isOff:
-        GPIO.output(nPin, GPIO.LOW)
+        GPIO.output(nPin, GPIO.HIGH)
         print("GPIO {} ==> Low".format(nPin))
         isOffList[no] = False
         btn.config(text="GPIO {} On".format(nPin))
         btn.config(bg="red")
     else:
-        GPIO.output(nPin, GPIO.HIGH)
+        GPIO.output(nPin, GPIO.LOW)
         print("GPIO {} ==> High".format(nPin))
         isOffList[no] = True
         btn.config(text="GPIO {} Off".format(nPin))
@@ -153,7 +153,7 @@ def initGPIO():
         GPIO.setup(nPin, GPIO.IN)
     
     for nPin in outputPinList:
-        GPIO.setup(nPin, GPIO.OUT, initial=GPIO.HIGH)
+        GPIO.setup(nPin, GPIO.OUT, initial=GPIO.LOW)
         print("pin {} ==> set to out".format(nPin))
 
     for i, pin in enumerate(outputPinList):
