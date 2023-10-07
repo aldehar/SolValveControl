@@ -91,9 +91,9 @@ class Comm:
         try:
             output = GPIO.LOW
             if isHigh:
-                output = GPIO.LOW
-            else:
                 output = GPIO.HIGH
+            else:
+                output = GPIO.LOW
 
             if no <= len(self.outputPinList):
                 self.setPinOutput(self.outputPinList[no-1], output)

@@ -624,7 +624,7 @@ class MainWindow(QMainWindow):
         Log.d(self.TAG, "RPi Out - No : {}, IsOpen : {}".format(no, isOpen))
         # 켜고 끄기(밸브5, 모터1)
         if no >= self.oIdxName["Valve1"] and no <= self.oIdxName["Motor"]:
-            self.rpiUtil.setOutput(no, not isOpen)
+            self.rpiUtil.setOutput(no, isOpen)
 
     # On 활성화/비활성화 Button Clicked(더 이상 안씀)
     def onEnableBtnClicked(self, no):
