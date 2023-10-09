@@ -8,6 +8,8 @@ import RPi.GPIO as GPIO
 
 win = tk.Tk()
 
+IS_PNP = True
+
 # Button High/Low
 isOffList = []
 # Button list
@@ -54,9 +56,11 @@ def initGUI():
             strIsOffBtn = "On"
         
         name = "Valve"
-        if i >= 5:
+        if i == 5:
             name = "Motor"
-            
+        elif i > 5:
+            name = "Etc"
+
         lbl = tk.Label(win, text=name +" "+str(i+1), font=("Arial Bold", 9))
         lbl.place(x=50, y=50*(i+1), width=50)
 
@@ -69,28 +73,38 @@ def initGUI():
         lbl = tk.Label(win, text=v, font=("Arial Bold", 9))
         lbl.place(x=200, y=50*(i+1), width=60)
 
-    for i in range(0, 5):
+    maxLength = len(outputPinList)
+
+    for i in range(0, maxLength):
         lbl = tk.Label(win, text="-")
         lbl.place(x=250, y=50*(i+1), width=100)
         lblList.append(lbl)
 	
+    lineY = 50 * (maxLength) + 50
+
     lblTimer = tk.Label(win, text="Timer", font=("Arial Bold", 11))
-    lblTimer.place(x=50, y=325)
+    lblTimer.place(x=50, y=lineY)
+    
+    lineY = lineY + 25
 
     for i in range(0, 5):
         lbl = tk.Label(win, text="Valve "+ str(i+1), font=("Arial Bold", 9))
-        lbl.place(x=50+75*i, y=350, width=50, height=25)
+        lbl.place(x=50+75*i, y=lineY, width=50, height=25)
 
+    lineY = lineY + 25
+    
     for i in range(0, 5):
         btn = tk.Button(win, text="Disable", bg="orange", fg="white", command=lambda no=i: onToggleBtnClick(no))
-        btn.place(x=50+75*i, y=375, width=50, height=25)
+        btn.place(x=50+75*i, y=lineY, width=50, height=25)
         btnSetList.append(btn)
+
+    lineY = lineY + 25
 
     for i in range(0, 5):
         sv = tk.StringVar()
         sv.set("0")
         sb = tk.Spinbox(win, textvariable=sv)
-        sb.place(x=50+75*i, y=400, width=50)
+        sb.place(x=50+75*i, y=lineY, width=50)
         sbList.append(sb)
         svList.append(sv)
 
@@ -110,13 +124,25 @@ def onBtnClick(no):
     btn = btnList[no]
     isOff = isOffList[no]
     if isOff:
-        GPIO.output(nPin, GPIO.HIGH)
+        level = GPIO.HIGH
+        if IS_PNP:
+            level = GPIO.HIGH
+        else:
+            level = GPIO.LOW
+
+        GPIO.output(nPin, level)
         print("GPIO {} ==> Low".format(nPin))
         isOffList[no] = False
         btn.config(text="GPIO {} On".format(nPin))
         btn.config(bg="red")
     else:
-        GPIO.output(nPin, GPIO.LOW)
+        level = GPIO.LOW
+        if IS_PNP:
+            level = GPIO.LOW
+        else:
+            level = GPIO.HIGH
+
+        GPIO.output(nPin, level)
         print("GPIO {} ==> High".format(nPin))
         isOffList[no] = True
         btn.config(text="GPIO {} Off".format(nPin))
@@ -152,8 +178,14 @@ def initGPIO():
     for nPin in inputPinList:
         GPIO.setup(nPin, GPIO.IN)
     
+    initLevel = GPIO.LOW
+    if IS_PNP:
+        initLevel = GPIO.LOW
+    else:
+        initLevel = GPIO.HIGH
+        
     for nPin in outputPinList:
-        GPIO.setup(nPin, GPIO.OUT, initial=GPIO.LOW)
+        GPIO.setup(nPin, GPIO.OUT, initial=initLevel)
         print("pin {} ==> set to out".format(nPin))
 
     for i, pin in enumerate(outputPinList):

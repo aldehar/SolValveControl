@@ -7,6 +7,10 @@ import log as Log
 
 class Comm:
     TAG = "RPiManager.Comm"
+
+    # 릴레이의 출력단자에 +, - 전압을 결선했는지 여부에 따라...
+    IS_PNP = True
+
     # SPI 쓰레드 활성화 변수
     isRunning = False
 
@@ -58,8 +62,14 @@ class Comm:
         for nPin in self.inputPinList:
             GPIO.setup(nPin, GPIO.IN)
         
+        initLevel = GPIO.LOW
+        if self.IS_PNP:
+            initLevel = GPIO.LOW
+        else:
+            initLevel = GPIO.HIGH
+
         for nPin in self.outputPinList:
-            GPIO.setup(nPin, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(nPin, GPIO.OUT, initial=initLevel)
             Log.d(self.TAG, "pin {} ==> set to OUT, initial = GPIO.HIGH".format(nPin))
 
     # SPI 통신 초기화
@@ -91,9 +101,15 @@ class Comm:
         try:
             output = GPIO.LOW
             if isHigh:
-                output = GPIO.HIGH
+                if self.IS_PNP:
+                    output = GPIO.HIGH
+                else:
+                    output = GPIO.LOW
             else:
-                output = GPIO.LOW
+                if self.IS_PNP:
+                    output = GPIO.LOW
+                else:
+                    output = GPIO.HIGH
 
             if no <= len(self.outputPinList):
                 self.setPinOutput(self.outputPinList[no-1], output)
