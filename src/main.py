@@ -507,10 +507,14 @@ class MainWindow(QMainWindow):
 
             # 4,5번 밸브의 경우, 서로 끄게 처리
             if no == self.oIdxName["Valve4"]:
-                self.printLine(self.oIdxName["Valve5"])
+                isOpen5 = self.manualBtnList[self.oIdxName["Valve5"]-1]["isOpen"]
+                if isOpen5:
+                    self.printLine(self.oIdxName["Valve5"])
                 self.rpiOut(self.oIdxName["Valve5"], isOpen=isOpen)
             elif no == self.oIdxName["Valve5"]:
-                self.printLine(self.oIdxName["Valve4"])
+                isOpen4 = self.manualBtnList[self.oIdxName["Valve4"]-1]["isOpen"]
+                if isOpen4:
+                    self.printLine(self.oIdxName["Valve4"])
                 self.rpiOut(self.oIdxName["Valve4"], isOpen=isOpen)
     
     # 자동모드 시작
@@ -561,7 +565,7 @@ class MainWindow(QMainWindow):
             self.resetQueue()
 
     # 배관 선 색깔 표시
-    def printLine(self, no, isDontCareOpen=False):
+    def printLine(self, no):
         """배관 선 색깔 표시
 
         Args:
