@@ -523,12 +523,12 @@ class MainWindow(QMainWindow):
                 isOpen5 = self.manualBtnList[self.oIdxName["Valve5"]-1]["isOpen"]
                 if isOpen5:
                     self.printLine(self.oIdxName["Valve5"])
-                self.rpiOut(self.oIdxName["Valve5"], isOpen=isOpen)
+                self.rpiOut(self.oIdxName["Valve5"], isOpen=False)
             elif no == self.oIdxName["Valve5"]:
                 isOpen4 = self.manualBtnList[self.oIdxName["Valve4"]-1]["isOpen"]
                 if isOpen4:
                     self.printLine(self.oIdxName["Valve4"])
-                self.rpiOut(self.oIdxName["Valve4"], isOpen=isOpen)
+                self.rpiOut(self.oIdxName["Valve4"], isOpen=False)
     
     # 자동모드 시작
     def startTask(self, no):
