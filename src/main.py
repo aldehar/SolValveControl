@@ -443,6 +443,19 @@ class MainWindow(QMainWindow):
 
         # 수동모드 -> 자동모드
         elif idx == self.oIdxName["MODE_MANUAL"]:
+            for o in self.manualBtnList:
+                # 전환 시, 모든 밸브 off
+                self.rpiUtil.setOutput(no=o["no"], isHigh=False)
+                o["isOpen"] = False
+
+                no = int(o["no"])
+                if no == self.oIdxName["Motor"]:
+                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["pump_off"]))
+                elif no != self.oIdxName["PressureGuage"]:
+                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["valve_off"]))
+                else:
+                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["pump_off"]))
+
             self.lblMode.setText("자동모드")
             self.btnOnOff.setStyleSheet("background-image : url({});background-repeat: no-repeat;".format(self.oImg["on"]))
             self.body.setCurrentIndex(self.oIdxName["MODE_AUTO"])
