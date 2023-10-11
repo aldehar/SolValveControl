@@ -301,7 +301,7 @@ class MainWindow(QMainWindow):
             {"no": 2, "o":None, "title":"초", "x":200, "y":420, "w":20,"h":20, "isHidden":False},
             {"no": 3, "o":None, "title":"초", "x":300, "y":420, "w":20,"h":20, "isHidden":False},
             {"no": 4, "o":None, "title":"초", "x":400, "y":420, "w":20,"h":20, "isHidden":False},
-            {"no": 5, "o":None, "title":"초", "x":500, "y":420, "w":20,"h":2, "isHidden":False}
+            {"no": 5, "o":None, "title":"초", "x":500, "y":420, "w":20,"h":20, "isHidden":False}
         ]
         
         for lbl in self.timeLblList:
