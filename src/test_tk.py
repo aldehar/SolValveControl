@@ -35,15 +35,7 @@ spi = None
 # SPI - Channel 0
 ch0 = 0x00
 
-# 서보핀을 PWM 모드 50Hz로 사용하기 (50Hz > 20ms)
-servo = GPIO.PWM(12, 50)
-# 서보 PWM 시작 duty = 0, duty가 0이면 서보는 동작하지 않는다.
-servo.start(0)
-
-# 서보의 최대(180도) 위치의 주기
-SERVO_MAX_DUTY = 12
-# 서보의 최소(0도) 위치의 주기
-SERVO_MIN_DUTY = 3
+isMotorOn = False
 
 def init():
     initGPIO()
@@ -130,12 +122,34 @@ def onWinClose():
     win.destroy()
 
 def onBtnClick(no):
+    global isMotorOn
     nPin = outputPinList[no]
     btn = btnList[no]
     isOff = isOffList[no]
+    print("clicked pin : ", nPin)
     # PwM
-    if no == 12:
-        setServoPos(180)
+    if nPin == 12:
+        print("isMotorOn :", isMotorOn)
+        if isMotorOn:
+            level = GPIO.LOW
+            if IS_PNP:
+                level = GPIO.LOW
+            else:
+                level = GPIO.HIGH
+            isMotorOn = False
+            GPIO.output(nPin, level)
+            btn.config(text="GPIO {} Off".format(nPin))
+            btn.config(bg="blue")
+        else:
+            level = GPIO.LOW
+            if IS_PNP:
+                level = GPIO.HIGH
+            else:
+                level = GPIO.LOW
+            isMotorOn = True
+            GPIO.output(nPin, level)
+            btn.config(text="GPIO {} On".format(nPin))
+            btn.config(bg="red")
     else:
         if isOff:
             level = GPIO.HIGH
@@ -230,7 +244,7 @@ def readSPI(ch):
         pressure = round((v-0.9)/0.4, 3)
 
         # for checking
-        print("[Ch {}] r:[{}], out:[{}],v:{} V, pressure:{} bar".format(0, read, outAdc, v, pressure))
+        #print("[Ch {}] r:[{}], out:[{}],v:{} V, pressure:{} bar".format(0, read, outAdc, v, pressure))
         printLblList = [str(ch), str(read), str(outAdc), str(v), str(pressure)+ " bar"]
         for i, v in enumerate(printLblList):
             lblList[i].config(text=v)
@@ -269,18 +283,6 @@ def printClock():
     tClock = threading.Timer(1, printClock)
     tClock.daemon = True
     tClock.start()
-
-def setServoPos(degree):
-    if degree > 180:
-        degree = 180
-    # 각도(degree)를 duty로 변경한다.
-    duty = SERVO_MIN_DUTY+(degree*(SERVO_MAX_DUTY-SERVO_MIN_DUTY)/180.0)
-    # duty 값 출력
-    print("Degree: {} to {}(Duty)".format(degree, duty))
-
-    # 변경된 duty값을 서보 pwm에 적용
-    servo.ChangeDutyCycle(duty)
-
 
 # 현재시간
 def getNow():
