@@ -28,12 +28,22 @@ lblClock = None
 # GPIO input pin list
 inputPinList = []
 # GPIO output pin list
-outputPinList = [17, 27, 22, 23, 24, 25]
+outputPinList = [17, 27, 22, 23, 24, 25, 12]
 
 # SPI
 spi = None
 # SPI - Channel 0
 ch0 = 0x00
+
+# 서보핀을 PWM 모드 50Hz로 사용하기 (50Hz > 20ms)
+servo = GPIO.PWM(12, 50)
+# 서보 PWM 시작 duty = 0, duty가 0이면 서보는 동작하지 않는다.
+servo.start(0)
+
+# 서보의 최대(180도) 위치의 주기
+SERVO_MAX_DUTY = 12
+# 서보의 최소(0도) 위치의 주기
+SERVO_MIN_DUTY = 3
 
 def init():
     initGPIO()
@@ -123,30 +133,34 @@ def onBtnClick(no):
     nPin = outputPinList[no]
     btn = btnList[no]
     isOff = isOffList[no]
-    if isOff:
-        level = GPIO.HIGH
-        if IS_PNP:
-            level = GPIO.HIGH
-        else:
-            level = GPIO.LOW
-
-        GPIO.output(nPin, level)
-        print("GPIO {} ==> Low".format(nPin))
-        isOffList[no] = False
-        btn.config(text="GPIO {} On".format(nPin))
-        btn.config(bg="red")
+    # PwM
+    if no == 12:
+        setServoPos(180)
     else:
-        level = GPIO.LOW
-        if IS_PNP:
-            level = GPIO.LOW
-        else:
+        if isOff:
             level = GPIO.HIGH
+            if IS_PNP:
+                level = GPIO.HIGH
+            else:
+                level = GPIO.LOW
 
-        GPIO.output(nPin, level)
-        print("GPIO {} ==> High".format(nPin))
-        isOffList[no] = True
-        btn.config(text="GPIO {} Off".format(nPin))
-        btn.config(bg="blue")
+            GPIO.output(nPin, level)
+            print("GPIO {} ==> Low".format(nPin))
+            isOffList[no] = False
+            btn.config(text="GPIO {} On".format(nPin))
+            btn.config(bg="red")
+        else:
+            level = GPIO.LOW
+            if IS_PNP:
+                level = GPIO.LOW
+            else:
+                level = GPIO.HIGH
+
+            GPIO.output(nPin, level)
+            print("GPIO {} ==> High".format(nPin))
+            isOffList[no] = True
+            btn.config(text="GPIO {} Off".format(nPin))
+            btn.config(bg="blue")
     	
     # 0.1 sec wait
     time.sleep(0.1)
@@ -255,6 +269,18 @@ def printClock():
     tClock = threading.Timer(1, printClock)
     tClock.daemon = True
     tClock.start()
+
+def setServoPos(degree):
+    if degree > 180:
+        degree = 180
+    # 각도(degree)를 duty로 변경한다.
+    duty = SERVO_MIN_DUTY+(degree*(SERVO_MAX_DUTY-SERVO_MIN_DUTY)/180.0)
+    # duty 값 출력
+    print("Degree: {} to {}(Duty)".format(degree, duty))
+
+    # 변경된 duty값을 서보 pwm에 적용
+    servo.ChangeDutyCycle(duty)
+
 
 # 현재시간
 def getNow():
