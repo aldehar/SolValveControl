@@ -82,7 +82,7 @@ class Comm:
         
         # SPI 통신에서 수신을 위한 thread
         self.isRunning = True
-        tSpi = threading.Thread(target=self.waitInput, args=())
+        tSpi = threading.Thread(target=self.waitSpiInput, args=())
         tSpi.daemon = True
         tSpi.start()
 
