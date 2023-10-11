@@ -3,7 +3,7 @@ import datetime
 import threading
 import copy
 from functools import partial
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel,QSpinBox, QComboBox, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel,QSpinBox, QComboBox, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea, QMessageBox, QDesktopWidget
 from PyQt5.QtGui import *
 from PyQt5.QtCore import Qt, QObject, pyqtSlot, pyqtSignal, QThread
 from PyQt5 import QtCore
@@ -111,6 +111,12 @@ class MainWindow(QMainWindow):
         
         Log.d(self.TAG, ">> ".format(self.taskQueue))
 
+    def moveToCenter(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
     # UI 초기화
     def initUI(self):
         """UI 초기화
@@ -167,7 +173,7 @@ class MainWindow(QMainWindow):
         # 배경
         self.lblBg = QLabel("", self.autoPage)
         self.lblBg.move(0, 15)
-        self.lblBg.resize(600, 400)
+        self.lblBg.resize(600, 350)
         self.pixmap = QPixmap()
         self.pixmap.load(self.oImg["bg"])
         self.pixmapVar = self.pixmap.scaledToWidth(600)
@@ -190,7 +196,7 @@ class MainWindow(QMainWindow):
             {"no":7, "o":None, "title":"7", "x":495, "y":215, "w":45,"h":5},
             {"no":8, "o":None, "title":"8", "x":277, "y":220, "w":5,"h":68},
             {"no":9, "o":None, "title":"9", "x":277, "y":283, "w":75,"h":5},
-            {"no":10, "o":None, "title":"10", "x":400, "y":285, "w":145,"h":5}
+            {"no":10, "o":None, "title":"10", "x":400, "y":283, "w":145,"h":5}
         ]
         
         for lblLine in self.lineList:
@@ -234,11 +240,11 @@ class MainWindow(QMainWindow):
 
         # 활성화/비활성화 버튼
         self.btnEnableList = [
-            {"no":1, "o":None, "title":"비활성화", "isEnable":False, "x":25, "y":420, "w":75,"h":20},
-            {"no":2, "o":None, "title":"비활성화", "isEnable":False, "x":125, "y":420, "w":75,"h":20},
-            {"no":3, "o":None, "title":"비활성화", "isEnable":False, "x":225, "y":420, "w":75,"h":20},
-            {"no":4, "o":None, "title":"비활성화", "isEnable":False, "x":325, "y":420, "w":75,"h":20},
-            {"no":5, "o":None, "title":"비활성화", "isEnable":False, "x":425, "y":420, "w":75,"h":20}
+            {"no":1, "o":None, "title":"비활성화", "isEnable":False, "x":25, "y":360, "w":75,"h":20},
+            {"no":2, "o":None, "title":"비활성화", "isEnable":False, "x":125, "y":360, "w":75,"h":20},
+            {"no":3, "o":None, "title":"비활성화", "isEnable":False, "x":225, "y":360, "w":75,"h":20},
+            {"no":4, "o":None, "title":"비활성화", "isEnable":False, "x":325, "y":360, "w":75,"h":20},
+            {"no":5, "o":None, "title":"비활성화", "isEnable":False, "x":425, "y":360, "w":75,"h":20}
         ]
 
         for btn in self.btnEnableList:
@@ -252,11 +258,11 @@ class MainWindow(QMainWindow):
 
         # 콤보박스 - 밸브선택
         self.cbList = [
-            {"no":1, "o":None, "title":"1", "x":25, "y":450, "w":75,"h":20},
-            {"no":2, "o":None, "title":"2", "x":125, "y":450, "w":75,"h":20},
-            {"no":3, "o":None, "title":"3", "x":225, "y":450, "w":75,"h":20},
-            {"no":4, "o":None, "title":"4", "x":325, "y":450, "w":75,"h":20},
-            {"no":5, "o":None, "title":"5", "x":425, "y":450, "w":75,"h":20}
+            {"no":1, "o":None, "title":"1", "x":25, "y":390, "w":75,"h":20},
+            {"no":2, "o":None, "title":"2", "x":125, "y":390, "w":75,"h":20},
+            {"no":3, "o":None, "title":"3", "x":225, "y":390, "w":75,"h":20},
+            {"no":4, "o":None, "title":"4", "x":325, "y":390, "w":75,"h":20},
+            {"no":5, "o":None, "title":"5", "x":425, "y":390, "w":75,"h":20}
         ]
         
         for cb in self.cbList:
@@ -272,11 +278,11 @@ class MainWindow(QMainWindow):
         
         # 밸브 초 값 스핀박스
         self.spboxList = [
-            {"no": 1, "o":None, "title":"1", "x":25, "y":475, "w":75,"h":20, "isHidden":True},
-            {"no": 2, "o":None, "title":"2", "x":125, "y":475, "w":75,"h":20, "isHidden":False},
-            {"no": 3, "o":None, "title":"3", "x":225, "y":475, "w":75,"h":20, "isHidden":False},
-            {"no": 4, "o":None, "title":"4", "x":325, "y":475, "w":75,"h":20, "isHidden":False},
-            {"no": 5, "o":None, "title":"5", "x":425, "y":475, "w":75,"h":20, "isHidden":False}
+            {"no": 1, "o":None, "title":"1", "x":25, "y":420, "w":75,"h":20, "isHidden":True},
+            {"no": 2, "o":None, "title":"2", "x":125, "y":420, "w":75,"h":20, "isHidden":False},
+            {"no": 3, "o":None, "title":"3", "x":225, "y":420, "w":75,"h":20, "isHidden":False},
+            {"no": 4, "o":None, "title":"4", "x":325, "y":420, "w":75,"h":20, "isHidden":False},
+            {"no": 5, "o":None, "title":"5", "x":425, "y":420, "w":75,"h":20, "isHidden":False}
         ]
         
         for spbox in self.spboxList:
@@ -291,11 +297,11 @@ class MainWindow(QMainWindow):
 
         # 밸브 초 라벨
         self.timeLblList = [
-            {"no": 1, "o":None, "title":"초", "x":100, "y":475, "w":20,"h":20, "isHidden":True},
-            {"no": 2, "o":None, "title":"초", "x":200, "y":475, "w":20,"h":20, "isHidden":False},
-            {"no": 3, "o":None, "title":"초", "x":300, "y":475, "w":20,"h":20, "isHidden":False},
-            {"no": 4, "o":None, "title":"초", "x":400, "y":475, "w":20,"h":20, "isHidden":False},
-            {"no": 5, "o":None, "title":"초", "x":500, "y":475, "w":20,"h":2, "isHidden":False}
+            {"no": 1, "o":None, "title":"초", "x":100, "y":420, "w":20,"h":20, "isHidden":True},
+            {"no": 2, "o":None, "title":"초", "x":200, "y":420, "w":20,"h":20, "isHidden":False},
+            {"no": 3, "o":None, "title":"초", "x":300, "y":420, "w":20,"h":20, "isHidden":False},
+            {"no": 4, "o":None, "title":"초", "x":400, "y":420, "w":20,"h":20, "isHidden":False},
+            {"no": 5, "o":None, "title":"초", "x":500, "y":420, "w":20,"h":2, "isHidden":False}
         ]
         
         for lbl in self.timeLblList:
@@ -313,7 +319,7 @@ class MainWindow(QMainWindow):
         # 배경
         self.lblBgManual = QLabel("", self.manualPage)
         self.lblBgManual.move(0, 15)
-        self.lblBgManual.resize(600, 400)
+        self.lblBgManual.resize(600, 350)
         self.pixmapManual = QPixmap()
         self.pixmapManual.load(self.oImg["bg"])
         self.pixmapVarManual = self.pixmapManual.scaledToWidth(600)
@@ -336,7 +342,7 @@ class MainWindow(QMainWindow):
             {"no":7, "o":None, "title":"7", "x":495, "y":215, "w":45,"h":5},
             {"no":8, "o":None, "title":"8", "x":277, "y":220, "w":5,"h":68},
             {"no":9, "o":None, "title":"9", "x":277, "y":283, "w":75,"h":5},
-            {"no":10, "o":None, "title":"10", "x":400, "y":285, "w":145,"h":5}
+            {"no":10, "o":None, "title":"10", "x":400, "y":283, "w":145,"h":5}
         ]
         
         for lblLine in self.manualLineList:
@@ -368,7 +374,6 @@ class MainWindow(QMainWindow):
             {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[2, 4, 6]},
             {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[10]},
             {"no":6, "o":None, "title":"M", "isOpen":False, "x":140, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[5, 8, 9]},
-            {"no":7, "o":None, "title":"P", "isOpen":False, "x":210, "y":165, "w":60,"h":60, "img":self.oImg["pump_off"], "lineList":[]}
         ]
         
         for btn in self.manualBtnList:
@@ -838,11 +843,14 @@ def getNow():
     formattedTime = now.strftime("%Y-%m-%d %H:%M:%S")
     return formattedTime
 
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = MainWindow()
     win.setWindowTitle("Solenoid Valve v0.1 test")
-    win.setGeometry(300, 300, 625, 575)
+    win.resize(625, 520)
+    win.moveToCenter()
     win.show()
 
     sys.exit(app.exec_())
