@@ -3,9 +3,9 @@ import datetime
 import threading
 import copy
 from functools import partial
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel,QSpinBox, QComboBox, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel,QSpinBox, QComboBox, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea, QMessageBox, QDesktopWidget
 from PyQt5.QtGui import *
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QObject, pyqtSlot, pyqtSignal, QThread
 from PyQt5 import QtCore
 
 import RPiManager
@@ -20,24 +20,19 @@ class MainWindow(QMainWindow):
         """
         super().__init__()
         self.initUI()
-        self.setTimer()
         self.setSchedule()
 
         # 라즈베리파이 관련 인스턴스
         self.rpiUtil = RPiManager.Comm(self)
 
+        self.worker = Worker()
+        self.worker.timeout.connect(self.sigTimeout)
+        self.worker.isRunning = True
+        self.worker.start()
+
         # 중복 체크(UI세팅시에 넣으면, 초기 값 세팅시에 체크됨)
         for cb in self.cbList:
             cb["o"].currentIndexChanged.connect(partial(self.onCbChanged, cb["no"]))
-
-    # 1초 타이머 세팅
-    def setTimer(self):
-        """1초 타이머 세팅
-        """
-        self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.printClock)
-        self.timer.start(1000)
-        self.printClock()
 
     # 초기 스케쥴 시간 설정
     def setSchedule(self):
@@ -117,6 +112,12 @@ class MainWindow(QMainWindow):
         
         Log.d(self.TAG, ">> ".format(self.taskQueue))
 
+    def moveToCenter(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
     # UI 초기화
     def initUI(self):
         """UI 초기화
@@ -173,7 +174,7 @@ class MainWindow(QMainWindow):
         # 배경
         self.lblBg = QLabel("", self.autoPage)
         self.lblBg.move(0, 15)
-        self.lblBg.resize(600, 400)
+        self.lblBg.resize(600, 350)
         self.pixmap = QPixmap()
         self.pixmap.load(self.oImg["bg"])
         self.pixmapVar = self.pixmap.scaledToWidth(600)
@@ -196,7 +197,7 @@ class MainWindow(QMainWindow):
             {"no":7, "o":None, "title":"7", "x":495, "y":215, "w":45,"h":5},
             {"no":8, "o":None, "title":"8", "x":277, "y":220, "w":5,"h":68},
             {"no":9, "o":None, "title":"9", "x":277, "y":283, "w":75,"h":5},
-            {"no":10, "o":None, "title":"10", "x":400, "y":285, "w":145,"h":5}
+            {"no":10, "o":None, "title":"10", "x":400, "y":283, "w":145,"h":5}
         ]
         
         for lblLine in self.lineList:
@@ -240,11 +241,11 @@ class MainWindow(QMainWindow):
 
         # 활성화/비활성화 버튼
         self.btnEnableList = [
-            {"no":1, "o":None, "title":"비활성화", "isEnable":False, "x":25, "y":420, "w":75,"h":20},
-            {"no":2, "o":None, "title":"비활성화", "isEnable":False, "x":125, "y":420, "w":75,"h":20},
-            {"no":3, "o":None, "title":"비활성화", "isEnable":False, "x":225, "y":420, "w":75,"h":20},
-            {"no":4, "o":None, "title":"비활성화", "isEnable":False, "x":325, "y":420, "w":75,"h":20},
-            {"no":5, "o":None, "title":"비활성화", "isEnable":False, "x":425, "y":420, "w":75,"h":20}
+            {"no":1, "o":None, "title":"비활성화", "isEnable":False, "x":25, "y":360, "w":75,"h":20},
+            {"no":2, "o":None, "title":"비활성화", "isEnable":False, "x":125, "y":360, "w":75,"h":20},
+            {"no":3, "o":None, "title":"비활성화", "isEnable":False, "x":225, "y":360, "w":75,"h":20},
+            {"no":4, "o":None, "title":"비활성화", "isEnable":False, "x":325, "y":360, "w":75,"h":20},
+            {"no":5, "o":None, "title":"비활성화", "isEnable":False, "x":425, "y":360, "w":75,"h":20}
         ]
 
         for btn in self.btnEnableList:
@@ -258,11 +259,11 @@ class MainWindow(QMainWindow):
 
         # 콤보박스 - 밸브선택
         self.cbList = [
-            {"no":1, "o":None, "title":"1", "x":25, "y":450, "w":75,"h":20},
-            {"no":2, "o":None, "title":"2", "x":125, "y":450, "w":75,"h":20},
-            {"no":3, "o":None, "title":"3", "x":225, "y":450, "w":75,"h":20},
-            {"no":4, "o":None, "title":"4", "x":325, "y":450, "w":75,"h":20},
-            {"no":5, "o":None, "title":"5", "x":425, "y":450, "w":75,"h":20}
+            {"no":1, "o":None, "title":"1", "x":25, "y":390, "w":75,"h":20},
+            {"no":2, "o":None, "title":"2", "x":125, "y":390, "w":75,"h":20},
+            {"no":3, "o":None, "title":"3", "x":225, "y":390, "w":75,"h":20},
+            {"no":4, "o":None, "title":"4", "x":325, "y":390, "w":75,"h":20},
+            {"no":5, "o":None, "title":"5", "x":425, "y":390, "w":75,"h":20}
         ]
         
         for cb in self.cbList:
@@ -278,11 +279,11 @@ class MainWindow(QMainWindow):
         
         # 밸브 초 값 스핀박스
         self.spboxList = [
-            {"no": 1, "o":None, "title":"1", "x":25, "y":475, "w":75,"h":20, "isHidden":True},
-            {"no": 2, "o":None, "title":"2", "x":125, "y":475, "w":75,"h":20, "isHidden":False},
-            {"no": 3, "o":None, "title":"3", "x":225, "y":475, "w":75,"h":20, "isHidden":False},
-            {"no": 4, "o":None, "title":"4", "x":325, "y":475, "w":75,"h":20, "isHidden":False},
-            {"no": 5, "o":None, "title":"5", "x":425, "y":475, "w":75,"h":20, "isHidden":False}
+            {"no": 1, "o":None, "title":"1", "x":25, "y":420, "w":75,"h":20, "isHidden":True},
+            {"no": 2, "o":None, "title":"2", "x":125, "y":420, "w":75,"h":20, "isHidden":False},
+            {"no": 3, "o":None, "title":"3", "x":225, "y":420, "w":75,"h":20, "isHidden":False},
+            {"no": 4, "o":None, "title":"4", "x":325, "y":420, "w":75,"h":20, "isHidden":False},
+            {"no": 5, "o":None, "title":"5", "x":425, "y":420, "w":75,"h":20, "isHidden":False}
         ]
         
         for spbox in self.spboxList:
@@ -297,11 +298,11 @@ class MainWindow(QMainWindow):
 
         # 밸브 초 라벨
         self.timeLblList = [
-            {"no": 1, "o":None, "title":"초", "x":100, "y":475, "w":20,"h":20, "isHidden":True},
-            {"no": 2, "o":None, "title":"초", "x":200, "y":475, "w":20,"h":20, "isHidden":False},
-            {"no": 3, "o":None, "title":"초", "x":300, "y":475, "w":20,"h":20, "isHidden":False},
-            {"no": 4, "o":None, "title":"초", "x":400, "y":475, "w":20,"h":20, "isHidden":False},
-            {"no": 5, "o":None, "title":"초", "x":500, "y":475, "w":20,"h":2, "isHidden":False}
+            {"no": 1, "o":None, "title":"초", "x":100, "y":420, "w":20,"h":20, "isHidden":True},
+            {"no": 2, "o":None, "title":"초", "x":200, "y":420, "w":20,"h":20, "isHidden":False},
+            {"no": 3, "o":None, "title":"초", "x":300, "y":420, "w":20,"h":20, "isHidden":False},
+            {"no": 4, "o":None, "title":"초", "x":400, "y":420, "w":20,"h":20, "isHidden":False},
+            {"no": 5, "o":None, "title":"초", "x":500, "y":420, "w":20,"h":20, "isHidden":False}
         ]
         
         for lbl in self.timeLblList:
@@ -319,7 +320,7 @@ class MainWindow(QMainWindow):
         # 배경
         self.lblBgManual = QLabel("", self.manualPage)
         self.lblBgManual.move(0, 15)
-        self.lblBgManual.resize(600, 400)
+        self.lblBgManual.resize(600, 350)
         self.pixmapManual = QPixmap()
         self.pixmapManual.load(self.oImg["bg"])
         self.pixmapVarManual = self.pixmapManual.scaledToWidth(600)
@@ -342,7 +343,7 @@ class MainWindow(QMainWindow):
             {"no":7, "o":None, "title":"7", "x":495, "y":215, "w":45,"h":5},
             {"no":8, "o":None, "title":"8", "x":277, "y":220, "w":5,"h":68},
             {"no":9, "o":None, "title":"9", "x":277, "y":283, "w":75,"h":5},
-            {"no":10, "o":None, "title":"10", "x":400, "y":285, "w":145,"h":5}
+            {"no":10, "o":None, "title":"10", "x":400, "y":283, "w":145,"h":5}
         ]
         
         for lblLine in self.manualLineList:
@@ -374,7 +375,6 @@ class MainWindow(QMainWindow):
             {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[2, 4, 6]},
             {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[10]},
             {"no":6, "o":None, "title":"M", "isOpen":False, "x":140, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[5, 8, 9]},
-            {"no":7, "o":None, "title":"P", "isOpen":False, "x":210, "y":165, "w":60,"h":60, "img":self.oImg["pump_off"], "lineList":[]}
         ]
         
         for btn in self.manualBtnList:
@@ -456,10 +456,14 @@ class MainWindow(QMainWindow):
                 else:
                     o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["pump_off"]))
 
+            # 선 모두 꺼짐(파란색)으로 처리
+            for o in self.manualLineList:
+                o["o"].setStyleSheet("background-color:{};".format('blue'))
+
             self.lblMode.setText("자동모드")
             self.btnOnOff.setStyleSheet("background-image : url({});background-repeat: no-repeat;".format(self.oImg["on"]))
             self.body.setCurrentIndex(self.oIdxName["MODE_AUTO"])
-
+            
     # On 콤보박스 index Changed
     def onCbChanged(self, no):
         """콤보박스 index 변화시에, callback
@@ -667,15 +671,6 @@ class MainWindow(QMainWindow):
         self.printLine(cbIdx)
         self.rpiOut(cbIdx+1, isEnable)
 
-    # 매초 call
-    def printClock(self):
-        """매초 시간표시 등을 위해 callback
-        """
-        strTime = getNow()
-        self.lblTime.setText(strTime)
-        
-        self.checkBtnActive()
-
     # 활성화/비활성화 버튼 체크
     def checkBtnActive(self):
         """활성화/비활성화 버튼 체크
@@ -801,18 +796,42 @@ class MainWindow(QMainWindow):
         # 압력이 1bar 이상이면, 시퀀스 시작
         if pressure >= 1:
             Log.d(self.TAG, "1 bar ↑ = {} bar".format(pressure))
-            if self.isTaskRunning == False:
+            if self.isTaskRunning == False and self.body.currentIndex() == self.oIdxName["MODE_AUTO"]:
+                Log.d(self.TAG, "Auto mode Start...!")
                 self.startTask(self.oIdxName["Motor"])
+            elif self.body.currentIndex() == self.oIdxName["MODE_MANUAL"]:
+                Log.d(self.TAG, "Manual mode...!")
             else:
-                Log.d(self.TAG, "alreay runnning...!")
-
+                Log.d(self.TAG, "Alreay runnning...!")
+    
+    #윈도우 닫을때
     def closeEvent(self, event):
         Log.d(self.TAG, "close window...")
         self.isTaskRunning = False
-        self.timer.stop()
+        self.worker.isRunning = False
+        self.worker.quit()
         # 라즈베리파이 자원 해제
         self.rpiUtil.release()
         event.accept()
+
+    @pyqtSlot(str)
+    def sigTimeout(self, now):
+        # 1초 마다
+        self.lblTime.setText(now)
+        self.checkBtnActive()
+
+# 1초 타임아웃
+class Worker(QThread):
+    isRunning = False
+    timeout = pyqtSignal(str)
+
+    def run(self):
+        while self.isRunning:
+            now = getNow()
+            # 현재시간
+            self.timeout.emit(now)
+            # 1초 대기
+            self.sleep(1)
 
 # 현재 시간
 def getNow():
@@ -825,11 +844,14 @@ def getNow():
     formattedTime = now.strftime("%Y-%m-%d %H:%M:%S")
     return formattedTime
 
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = MainWindow()
     win.setWindowTitle("Solenoid Valve v0.1 test")
-    win.setGeometry(300, 300, 625, 575)
+    win.resize(625, 520)
+    win.moveToCenter()
     win.show()
 
     sys.exit(app.exec_())
