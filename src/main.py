@@ -27,6 +27,7 @@ class MainWindow(QMainWindow):
 
         self.worker = Worker()
         self.worker.timeout.connect(self.sigTimeout)
+        self.worker.isRunning = True
         self.worker.start()
 
         # 중복 체크(UI세팅시에 넣으면, 초기 값 세팅시에 체크됨)
@@ -463,8 +464,6 @@ class MainWindow(QMainWindow):
             self.btnOnOff.setStyleSheet("background-image : url({});background-repeat: no-repeat;".format(self.oImg["on"]))
             self.body.setCurrentIndex(self.oIdxName["MODE_AUTO"])
             
-            
-
     # On 콤보박스 index Changed
     def onCbChanged(self, no):
         """콤보박스 index 변화시에, callback
@@ -809,6 +808,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         Log.d(self.TAG, "close window...")
         self.isTaskRunning = False
+        self.worker.isRunning = False
         self.worker.quit()
         # 라즈베리파이 자원 해제
         self.rpiUtil.release()
@@ -822,10 +822,11 @@ class MainWindow(QMainWindow):
 
 # 1초 타임아웃
 class Worker(QThread):
+    isRunning = False
     timeout = pyqtSignal(str)
 
     def run(self):
-        while True:
+        while self.isRunning:
             now = getNow()
             # 현재시간
             self.timeout.emit(now)
