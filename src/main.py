@@ -5,7 +5,7 @@ import copy
 from functools import partial
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel,QSpinBox, QComboBox, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea, QMessageBox
 from PyQt5.QtGui import *
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QObject, pyqtSlot, pyqtSignal, QThread
 from PyQt5 import QtCore
 
 import RPiManager
@@ -20,24 +20,18 @@ class MainWindow(QMainWindow):
         """
         super().__init__()
         self.initUI()
-        self.setTimer()
         self.setSchedule()
 
         # 라즈베리파이 관련 인스턴스
         self.rpiUtil = RPiManager.Comm(self)
 
+        self.worker = Worker()
+        self.worker.timeout.connect(self.sigTimeout)
+        self.worker.start()
+
         # 중복 체크(UI세팅시에 넣으면, 초기 값 세팅시에 체크됨)
         for cb in self.cbList:
             cb["o"].currentIndexChanged.connect(partial(self.onCbChanged, cb["no"]))
-
-    # 1초 타이머 세팅
-    def setTimer(self):
-        """1초 타이머 세팅
-        """
-        self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.printClock)
-        self.timer.start(1000)
-        self.printClock()
 
     # 초기 스케쥴 시간 설정
     def setSchedule(self):
@@ -456,9 +450,15 @@ class MainWindow(QMainWindow):
                 else:
                     o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["pump_off"]))
 
+            # 선 모두 꺼짐(파란색)으로 처리
+            for o in self.manualLineList:
+                o["o"].setStyleSheet("background-color:{};".format('blue'))
+
             self.lblMode.setText("자동모드")
             self.btnOnOff.setStyleSheet("background-image : url({});background-repeat: no-repeat;".format(self.oImg["on"]))
             self.body.setCurrentIndex(self.oIdxName["MODE_AUTO"])
+            
+            
 
     # On 콤보박스 index Changed
     def onCbChanged(self, no):
@@ -667,15 +667,6 @@ class MainWindow(QMainWindow):
         self.printLine(cbIdx)
         self.rpiOut(cbIdx+1, isEnable)
 
-    # 매초 call
-    def printClock(self):
-        """매초 시간표시 등을 위해 callback
-        """
-        strTime = getNow()
-        self.lblTime.setText(strTime)
-        
-        self.checkBtnActive()
-
     # 활성화/비활성화 버튼 체크
     def checkBtnActive(self):
         """활성화/비활성화 버튼 체크
@@ -801,18 +792,40 @@ class MainWindow(QMainWindow):
         # 압력이 1bar 이상이면, 시퀀스 시작
         if pressure >= 1:
             Log.d(self.TAG, "1 bar ↑ = {} bar".format(pressure))
-            if self.isTaskRunning == False:
+            if self.isTaskRunning == False and self.body.currentIndex() == self.oIdxName["MODE_AUTO"]:
+                Log.d(self.TAG, "Auto mode Start...!")
                 self.startTask(self.oIdxName["Motor"])
+            elif self.body.currentIndex() == self.oIdxName["MODE_MANUAL"]:
+                Log.d(self.TAG, "Manual mode...!")
             else:
-                Log.d(self.TAG, "alreay runnning...!")
-
+                Log.d(self.TAG, "Alreay runnning...!")
+    
+    #윈도우 닫을때
     def closeEvent(self, event):
         Log.d(self.TAG, "close window...")
         self.isTaskRunning = False
-        self.timer.stop()
+        self.worker.quit()
         # 라즈베리파이 자원 해제
         self.rpiUtil.release()
         event.accept()
+
+    @pyqtSlot(str)
+    def sigTimeout(self, now):
+        # 1초 마다
+        self.lblTime.setText(now)
+        self.checkBtnActive()
+
+# 1초 타임아웃
+class Worker(QThread):
+    timeout = pyqtSignal(str)
+
+    def run(self):
+        while True:
+            now = getNow()
+            # 현재시간
+            self.timeout.emit(now)
+            # 1초 대기
+            self.sleep(1)
 
 # 현재 시간
 def getNow():

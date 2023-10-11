@@ -133,12 +133,11 @@ class Comm:
         return v
         
     # SPI 통신 대기
-    def waitInput(self):
+    def waitSpiInput(self):
         try:
             while self.isRunning:
                 # SPI 입력
                 self.readSPI(self.ch0)
-                # self.readSPI(self.ch1)
                 time.sleep(self.waitTime)
         except KeyboardInterrupt:
             pass
