@@ -3,7 +3,7 @@ import datetime
 import threading
 import copy
 from functools import partial
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel,QSpinBox, QComboBox, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea, QMessageBox, QDesktopWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel,QSpinBox, QComboBox, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea, QMessageBox, QDesktopWidget, QLineEdit
 from PyQt5.QtGui import *
 from PyQt5.QtCore import Qt, QObject, pyqtSlot, pyqtSignal, QThread
 from PyQt5 import QtCore
@@ -14,6 +14,7 @@ import log as Log
 class MainWindow(QMainWindow):
     TAG = "Main"
     oIdxName = {"MODE_AUTO":0, "MODE_MANUAL":1, "Valve1":1, "Valve2":2, "Valve3":3, "Valve4":4, "Valve5":5, "Motor":6, "PressureGuage":7}
+    setPressure = 0.5
 
     def __init__(self):
         """생성자
@@ -24,11 +25,12 @@ class MainWindow(QMainWindow):
 
         # 라즈베리파이 관련 인스턴스
         self.rpiUtil = RPiManager.Comm(self)
+        self.rpiUtil.sigMeasurePressure.connect(self.onRecvResult)
 
-        self.worker = Worker()
-        self.worker.timeout.connect(self.sigTimeout)
-        self.worker.isRunning = True
-        self.worker.start()
+        self.timeWorker = TimeWorker()
+        self.timeWorker.timeout.connect(self.sigTimeout)
+        self.timeWorker.isRunning = True
+        self.timeWorker.start()
 
         # 중복 체크(UI세팅시에 넣으면, 초기 값 세팅시에 체크됨)
         for cb in self.cbList:
@@ -43,10 +45,10 @@ class MainWindow(QMainWindow):
 
         self.initQueue = [
             {"no":1, "valve":4, "period":"-1s", "remain":-1, "isSeq":False, "parent":0},
-            {"no":2, "valve":1, "period":"2s", "remain":2, "isSeq":True, "parent":4},
-            {"no":3, "valve":2, "period":"3s", "remain":3, "isSeq":True, "parent":4},
-            {"no":4, "valve":3, "period":"2s", "remain":2, "isSeq":False, "parent":4},
-            {"no":5, "valve":5, "period":"3s", "remain":3, "isSeq":False, "parent":0}
+            {"no":2, "valve":1, "period":"8s", "remain":8, "isSeq":True, "parent":4},
+            {"no":3, "valve":2, "period":"6s", "remain":6, "isSeq":True, "parent":4},
+            {"no":4, "valve":3, "period":"7s", "remain":7, "isSeq":False, "parent":4},
+            {"no":5, "valve":5, "period":"5s", "remain":5, "isSeq":False, "parent":0}
         ]
 
         self.resetQueue()
@@ -313,6 +315,21 @@ class MainWindow(QMainWindow):
             if lbl["isHidden"]:
                 lbl["o"].hide()
         
+        # 동작 압력 설정
+        lblSetPressure = QLabel(self.autoPage)
+        lblSetPressure.setText("동작 압력")
+        lblSetPressure.move(525, 365)
+
+        self.edPressure = QLineEdit(self.autoPage)
+        self.edPressure.move(525, 390)
+        self.edPressure.setText(str(self.setPressure))
+        self.edPressure.resize(30, 25)
+        self.edPressure.textChanged.connect(self.onSetPressureChanged)
+
+        lblBar = QLabel(self.autoPage)
+        lblBar.setText("bar")
+        lblBar.move(560, 400)
+
         ###########################################################################################
         # 수동 레이아웃
         ###########################################################################################
@@ -794,8 +811,8 @@ class MainWindow(QMainWindow):
         self.manualPressure.setText(txtPressure)
 
         # 압력이 1bar 이상이면, 시퀀스 시작
-        if pressure >= 1:
-            Log.d(self.TAG, "1 bar ↑ = {} bar".format(pressure))
+        if pressure >= self.setPressure:
+            Log.d(self.TAG, "{} bar ↑ = {} bar".format(self.setPressure, pressure))
             if self.isTaskRunning == False and self.body.currentIndex() == self.oIdxName["MODE_AUTO"]:
                 Log.d(self.TAG, "Auto mode Start...!")
                 self.startTask(self.oIdxName["Motor"])
@@ -804,12 +821,19 @@ class MainWindow(QMainWindow):
             else:
                 Log.d(self.TAG, "Alreay runnning...!")
     
+    # 압력 설정값 변경될 때,
+    def onSetPressureChanged(self):
+        strPressure = self.edPressure.text()
+        prevPressure = self.setPressure
+        self.setPressure = float(strPressure)
+        Log.i(self.TAG, "압력 설정값 바뀜 {} ===> {}".format(prevPressure, strPressure))
+
     #윈도우 닫을때
     def closeEvent(self, event):
         Log.d(self.TAG, "close window...")
         self.isTaskRunning = False
-        self.worker.isRunning = False
-        self.worker.quit()
+        self.timeWorker.isRunning = False
+        self.timeWorker.quit()
         # 라즈베리파이 자원 해제
         self.rpiUtil.release()
         event.accept()
@@ -821,7 +845,7 @@ class MainWindow(QMainWindow):
         self.checkBtnActive()
 
 # 1초 타임아웃
-class Worker(QThread):
+class TimeWorker(QThread):
     isRunning = False
     timeout = pyqtSignal(str)
 
@@ -844,12 +868,10 @@ def getNow():
     formattedTime = now.strftime("%Y-%m-%d %H:%M:%S")
     return formattedTime
 
-
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = MainWindow()
-    win.setWindowTitle("Solenoid Valve v0.1 test")
+    win.setWindowTitle("Solenoid Valve Controller v0.1 [Test]")
     win.resize(625, 520)
     win.moveToCenter()
     win.show()

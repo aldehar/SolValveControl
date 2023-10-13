@@ -3,9 +3,11 @@ import RPi.GPIO as GPIO
 import spidev
 import time
 
+from PyQt5.QtCore import QObject, pyqtSignal
+
 import log as Log
 
-class Comm:
+class Comm(QObject):
     TAG = "RPiManager.Comm"
 
     # 릴레이의 출력단자에 +, - 전압을 결선했는지 여부에 따라...
@@ -24,6 +26,9 @@ class Comm:
     ch1 = 0x10
     # SPI 통신대기 시간(단위:초)
     waitTime = 0.5
+
+    # send result
+    sigMeasurePressure = pyqtSignal(object)
 
     # 생성자
     def __init__(self, win):
@@ -126,7 +131,7 @@ class Comm:
             pressure = round((v-0.9)/0.4, 3)
             dictRtn = {"ch": ch, "read":read, "outAdc": outAdc, "v":v, "pressure":pressure}
 
-            self.win.onRecvResult(dictRtn)
+            self.sigMeasurePressure.emit(dictRtn)
         except Exception as e:
             Log.w(self.TAG, "readSPI() Exception cause : {}".format(e))
 
