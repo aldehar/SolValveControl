@@ -14,7 +14,7 @@ import log as Log
 class MainWindow(QMainWindow):
     TAG = "Main"
     oIdxName = {"MODE_AUTO":0, "MODE_MANUAL":1, "Valve1":1, "Valve2":2, "Valve3":3, "Valve4":4, "Valve5":5, "Motor":6, "PressureGuage":7}
-    setPressure = 0.5
+    startPressure = 0.5
 
     def __init__(self):
         """생성자
@@ -322,13 +322,17 @@ class MainWindow(QMainWindow):
 
         self.edPressure = QLineEdit(self.autoPage)
         self.edPressure.move(525, 390)
-        self.edPressure.setText(str(self.setPressure))
+        self.edPressure.setText(str(self.startPressure))
         self.edPressure.resize(30, 25)
-        self.edPressure.textChanged.connect(self.onSetPressureChanged)
 
         lblBar = QLabel(self.autoPage)
         lblBar.setText("bar")
         lblBar.move(560, 400)
+
+        self.btnSetPressure = QPushButton(self.autoPage, text="압력 저장")
+        self.btnSetPressure.move(525, 420)
+        self.btnSetPressure.resize(70, 25)
+        self.btnSetPressure.clicked.connect(self.setPressure)
 
         ###########################################################################################
         # 수동 레이아웃
@@ -811,8 +815,8 @@ class MainWindow(QMainWindow):
         self.manualPressure.setText(txtPressure)
 
         # 압력이 1bar 이상이면, 시퀀스 시작
-        if pressure >= self.setPressure:
-            Log.d(self.TAG, "{} bar ↑ = {} bar".format(self.setPressure, pressure))
+        if pressure >= self.startPressure:
+            Log.d(self.TAG, "{} bar ↑ = {} bar".format(self.startPressure, pressure))
             if self.isTaskRunning == False and self.body.currentIndex() == self.oIdxName["MODE_AUTO"]:
                 Log.d(self.TAG, "Auto mode Start...!")
                 self.startTask(self.oIdxName["Motor"])
@@ -822,10 +826,10 @@ class MainWindow(QMainWindow):
                 Log.d(self.TAG, "Alreay runnning...!")
     
     # 압력 설정값 변경될 때,
-    def onSetPressureChanged(self):
+    def setPressure(self):
         strPressure = self.edPressure.text()
-        prevPressure = self.setPressure
-        self.setPressure = float(strPressure)
+        prevPressure = self.startPressure
+        self.startPressure = float(strPressure)
         Log.i(self.TAG, "압력 설정값 바뀜 {} ===> {}".format(prevPressure, strPressure))
 
     #윈도우 닫을때
