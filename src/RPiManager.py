@@ -19,7 +19,7 @@ class Comm(QObject):
     # GPIO input pin list
     inputPinList = []
     # GPIO output pin list[BCM]
-    outputPinList = [17, 27, 22, 23, 24, 25]
+    outputPinList = [17, 27, 22, 23, 24, 25, 12]
 
     spi = None
     ch0 = 0x00

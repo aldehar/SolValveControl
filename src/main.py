@@ -13,7 +13,7 @@ import log as Log
 
 class MainWindow(QMainWindow):
     TAG = "Main"
-    oIdxName = {"MODE_AUTO":0, "MODE_MANUAL":1, "Valve1":1, "Valve2":2, "Valve3":3, "Valve4":4, "Valve5":5, "Motor":6, "PressureGuage":7}
+    oIdxName = {"MODE_AUTO":0, "MODE_MANUAL":1, "Valve1":1, "Valve2":2, "Valve3":3, "Valve4":4, "Valve5":5, "Motor":6, "Dog_Feed":7}
     startPressure = 0.5
 
     def __init__(self):
@@ -131,7 +131,9 @@ class MainWindow(QMainWindow):
             "pump_on":"res/imgs/pump_on.png",
             "pump_off":"res/imgs/pump_off.png",
             "valve_on":"res/imgs/valve_on.png",
-            "valve_off":"res/imgs/valve_off.png"
+            "valve_off":"res/imgs/valve_off.png",
+            "dog_feed_on":"res/imgs/dog_feed_on.png",
+            "dog_feed_off":"res/imgs/dog_feed_off.png"
         }
 
         self.mainLayout = QVBoxLayout()
@@ -230,8 +232,8 @@ class MainWindow(QMainWindow):
             {"no":3, "o":None, "title":"3", "isOpen":False, "x":445, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[7]},
             {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[2, 4, 6]},
             {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[10]},
-            {"no":6, "o":None, "title":"P", "isOpen":False, "x":140, "y":165, "w":51,"h":60, "img":self.oImg["pump_off"], "lineList":[5, 8, 9]}
-            #{"no":7, "o":None, "title":"P", "isOpen":False, "x":210, "y":165, "w":60,"h":60, "img":self.oImg["pump"], "lineList":[]}
+            {"no":6, "o":None, "title":"M", "isOpen":False, "x":140, "y":165, "w":51,"h":60, "img":self.oImg["pump_off"], "lineList":[5, 8, 9]},
+            {"no":7, "o":None, "title":"", "isOpen":False, "x":50, "y":250, "w":90,"h":60, "img":self.oImg["dog_feed_off"], "lineList":[]}
         ]
         
         for btn in self.btnList:
@@ -396,6 +398,7 @@ class MainWindow(QMainWindow):
             {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[2, 4, 6]},
             {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[10]},
             {"no":6, "o":None, "title":"M", "isOpen":False, "x":140, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[5, 8, 9]},
+            {"no":7, "o":None, "title":"Dog", "isOpen":False, "x":50, "y":250, "w":90,"h":60, "img":self.oImg["dog_feed_off"], "lineList":[]}
         ]
         
         for btn in self.manualBtnList:
@@ -444,10 +447,10 @@ class MainWindow(QMainWindow):
                 no = int(o["no"])
                 if no == self.oIdxName["Motor"]:
                     o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["pump_off"]))
-                elif no != self.oIdxName["PressureGuage"]:
-                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["valve_off"]))
+                elif no == self.oIdxName["Dog_Feed"]:
+                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["dog_feed_off"]))
                 else:
-                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["pump_off"]))
+                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["valve_off"]))
 
             # 활성화 버튼 -> 비활성화로
             for o in self.btnEnableList:
@@ -472,10 +475,10 @@ class MainWindow(QMainWindow):
                 no = int(o["no"])
                 if no == self.oIdxName["Motor"]:
                     o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["pump_off"]))
-                elif no != self.oIdxName["PressureGuage"]:
-                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["valve_off"]))
+                elif no == self.oIdxName["Dog_Feed"]:
+                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["dog_feed_off"]))
                 else:
-                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["pump_off"]))
+                    o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["valve_off"]))
 
             # 선 모두 꺼짐(파란색)으로 처리
             for o in self.manualLineList:
@@ -534,7 +537,13 @@ class MainWindow(QMainWindow):
 
         # 자동모드 일때만,
         if bodyIndex == self.oIdxName["MODE_AUTO"]:
-            self.startTask(no)
+            if no == self.oIdxName["Dog_Feed"]:
+                self.isTaskRunning = False
+                self.printLine(no)
+                self.rpiOut(no, self.btnList[no-1]["isOpen"])
+            else:
+                self.startTask(no)
+
         # 수동모드 일때만,
         elif bodyIndex == self.oIdxName["MODE_MANUAL"]:
             # 자기 밸브 처리
@@ -597,10 +606,6 @@ class MainWindow(QMainWindow):
             self.isTaskRunning = True
             self.printLine(no)
             self.nextValve(no)
-        # 압력계 버튼 클릭 시,(임시)
-        elif no == self.oIdxName["PressureGuage"]:
-            self.isTaskRunning = False
-            self.resetQueue()
 
     # 배관 선 색깔 표시
     def printLine(self, no):
@@ -609,6 +614,7 @@ class MainWindow(QMainWindow):
         Args:
             no (int): 버튼 번호
         """
+        print(">>>>>>>>>>>>>>>>>>>>> no1 : ", no)
         targetDictBtn = None
         targetIsOpen = False
         targetBtn = None
@@ -625,7 +631,7 @@ class MainWindow(QMainWindow):
             targetLineList = self.manualLineList
 
         targetIsOpen = targetDictBtn["isOpen"]
-        
+
         color = "blue"
         strImg = "valve_off"
         # 열려 있으면, 닫을 거라서, 파->빨 , 빨->파 로 바꿈
@@ -634,20 +640,21 @@ class MainWindow(QMainWindow):
             color = "blue"
             if no == self.oIdxName["Motor"]:
                 strImg = "pump_off"
+            elif no == self.oIdxName["Dog_Feed"]:
+                strImg = "dog_feed_off"
             else:
                 strImg = "valve_off"
         else:
             color = "red"
             if no == self.oIdxName["Motor"]:
                 strImg = "pump_on"
+            elif no == self.oIdxName["Dog_Feed"]:
+                strImg = "dog_feed_on"
             else:
                 strImg = "valve_on"
 
-        if no == self.oIdxName["PressureGuage"]:
-            strImg = "pump_off"
-
         # 대상에 한해서(밸브5, 모터1)
-        if no >= self.oIdxName["Valve1"] and no <= self.oIdxName["PressureGuage"]:
+        if no >= self.oIdxName["Valve1"] and no <= self.oIdxName["Dog_Feed"]:
             # 버튼 색깔 및 배경 변경
             targetBtn.setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:{};".format(self.oImg[strImg], color))
             # 줄색깔 변경
