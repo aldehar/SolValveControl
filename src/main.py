@@ -674,7 +674,7 @@ class MainWindow(QMainWindow):
         """
         Log.d(self.TAG, "RPi Out - No : {}, IsOpen : {}".format(no, isOpen))
         # 켜고 끄기(밸브5, 모터1)
-        if no >= self.oIdxName["Valve1"] and no <= self.oIdxName["Motor"]:
+        if no >= self.oIdxName["Valve1"] and no <= self.oIdxName["Dog_Feed"]:
             self.rpiUtil.setOutput(no, isOpen)
 
     # On 활성화/비활성화 Button Clicked(더 이상 안씀)
