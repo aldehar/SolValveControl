@@ -331,7 +331,7 @@ class MainWindow(QMainWindow):
         lblBar.setText("bar")
         lblBar.move(560, 400)
 
-        self.btnSetPressure = QPushButton(self.autoPage, text="압력 저장")
+        self.btnSetPressure = QPushButton(self.autoPage, text="압력 설정")
         self.btnSetPressure.move(525, 420)
         self.btnSetPressure.resize(70, 25)
         self.btnSetPressure.clicked.connect(self.setPressure)
@@ -614,7 +614,6 @@ class MainWindow(QMainWindow):
         Args:
             no (int): 버튼 번호
         """
-        print(">>>>>>>>>>>>>>>>>>>>> no1 : ", no)
         targetDictBtn = None
         targetIsOpen = False
         targetBtn = None

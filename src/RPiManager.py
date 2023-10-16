@@ -12,7 +12,8 @@ class Comm(QObject):
 
     # 릴레이의 출력단자에 +, - 전압을 결선했는지 여부에 따라...
     IS_PNP = True
-
+    # 농장인지 - spi 계산식 변경 됨
+    IS_FARM = False
     # SPI 쓰레드 활성화 변수
     isRunning = False
 
@@ -128,7 +129,11 @@ class Comm(QObject):
             read = self.spi.xfer2([1, (8+ch)<<4, 0])
             outAdc = ((read[1]&3) << 8) + read[2]
             v = round(((outAdc * 3.3) / 1024), 4)
-            pressure = round((v-0.9)/0.4, 3)
+            pressure = -1
+            if self.IS_FARM:
+                pressure = round((v-1)/0.45, 3)
+            else:
+                pressure = round((v-0.9)/0.4, 3)
             dictRtn = {"ch": ch, "read":read, "outAdc": outAdc, "v":v, "pressure":pressure}
 
             self.sigMeasurePressure.emit(dictRtn)
