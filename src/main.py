@@ -447,8 +447,12 @@ class MainWindow(QMainWindow):
 
         # 자동모드 -> 수동모드
         if idx == self.oIdxName["MODE_AUTO"]:
+            # 밸브 열기/닫기 시퀀스 정지
             self.isTaskRunning = False
+            # 개밥 타이머 정지
             self.oDogFeed["isRunning"] = False
+            self.dogFeedTimer.stop()
+
             self.lblMode.setText("수동모드")
             self.btnOnOff.setStyleSheet("background-image : url({});background-repeat: no-repeat;".format(self.oImg["off"]))
             self.body.setCurrentIndex(self.oIdxName["MODE_MANUAL"])
