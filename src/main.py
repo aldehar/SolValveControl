@@ -14,7 +14,12 @@ import log as Log
 class MainWindow(QMainWindow):
     TAG = "Main"
     oIdxName = {"MODE_AUTO":0, "MODE_MANUAL":1, "Valve1":1, "Valve2":2, "Valve3":3, "Valve4":4, "Valve5":5, "Motor":6, "Dog_Feed":7}
-    isDogFeedRunning = False
+    
+    oDogFeed = {
+        "isRunning" : False,
+        "feedTime" : 45
+    }
+    
     startPressure = 0.5
 
     def __init__(self):
@@ -342,6 +347,7 @@ class MainWindow(QMainWindow):
         self.spDogFeedTime.move(50, 310)
         self.spDogFeedTime.resize(90, 25)
         self.spDogFeedTime.setRange(0, 9999)
+        self.spDogFeedTime.setValue(self.oDogFeed["feedTime"])
         
         ###########################################################################################
         # 수동 레이아웃
@@ -442,6 +448,7 @@ class MainWindow(QMainWindow):
         # 자동모드 -> 수동모드
         if idx == self.oIdxName["MODE_AUTO"]:
             self.isTaskRunning = False
+            self.oDogFeed["isRunning"] = False
             self.lblMode.setText("수동모드")
             self.btnOnOff.setStyleSheet("background-image : url({});background-repeat: no-repeat;".format(self.oImg["off"]))
             self.body.setCurrentIndex(self.oIdxName["MODE_MANUAL"])
@@ -490,6 +497,8 @@ class MainWindow(QMainWindow):
             # 선 모두 꺼짐(파란색)으로 처리
             for o in self.manualLineList:
                 o["o"].setStyleSheet("background-color:{};".format('blue'))
+
+            self.spDogFeedTime.setValue(self.oDogFeed["feedTime"])
 
             self.lblMode.setText("자동모드")
             self.btnOnOff.setStyleSheet("background-image : url({});background-repeat: no-repeat;".format(self.oImg["on"]))
@@ -545,14 +554,15 @@ class MainWindow(QMainWindow):
         # 자동모드 일때만,
         if bodyIndex == self.oIdxName["MODE_AUTO"]:
             if no == self.oIdxName["Dog_Feed"]:
-                if self.isDogFeedRunning == False:
+                if self.oDogFeed["isRunning"] == False:
                     Log.d(self.TAG, "[Start] 개밥주기")
-                    self.isDogFeedRunning = True
+                    self.oDogFeed["isRunning"] = True
                     # 버튼 색깔 처리
                     self.printLine(no)
                     self.rpiOut(no, self.btnList[no-1]["isOpen"])
 
                     dogFeedTime = self.spDogFeedTime.value()
+                    self.oDogFeed["feedTime"] = dogFeedTime
                     print("개밥 시간 : ", dogFeedTime)
 
                     self.dogFeedTimer = QTimer(self)
@@ -592,7 +602,8 @@ class MainWindow(QMainWindow):
             no = self.oIdxName["Dog_Feed"]
             self.printLine(no)
             self.rpiOut(no, self.btnList[no-1]["isOpen"])
-            self.isDogFeedRunning = False
+            self.oDogFeed["isRunning"] = False
+            self.spDogFeedTime.setValue(self.oDogFeed["feedTime"])
 
     # 자동모드 시작
     def startTask(self, no):
@@ -762,7 +773,7 @@ class MainWindow(QMainWindow):
                         self.rpiOut(valveNo, isOpen=False)
                         # 0초 되면, 다음걸로 넘어가기
                         self.nextValve(valveNo)
-        if self.isDogFeedRunning == True:
+        if self.oDogFeed["isRunning"] == True:
             nDogTime = self.spDogFeedTime.value()
             nDogTime = nDogTime - 1
             if nDogTime > 0:
