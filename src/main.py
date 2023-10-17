@@ -5,7 +5,7 @@ import copy
 from functools import partial
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel,QSpinBox, QComboBox, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea, QMessageBox, QDesktopWidget, QLineEdit
 from PyQt5.QtGui import *
-from PyQt5.QtCore import Qt, QObject, pyqtSlot, pyqtSignal, QThread
+from PyQt5.QtCore import Qt, QObject, pyqtSlot, pyqtSignal, QThread, QTimer
 from PyQt5 import QtCore
 
 import RPiManager
@@ -14,6 +14,7 @@ import log as Log
 class MainWindow(QMainWindow):
     TAG = "Main"
     oIdxName = {"MODE_AUTO":0, "MODE_MANUAL":1, "Valve1":1, "Valve2":2, "Valve3":3, "Valve4":4, "Valve5":5, "Motor":6, "Dog_Feed":7}
+    isDogFeedRunning = False
     startPressure = 0.5
 
     def __init__(self):
@@ -283,11 +284,11 @@ class MainWindow(QMainWindow):
         
         # 밸브 초 값 스핀박스
         self.spboxList = [
-            {"no": 1, "o":None, "title":"1", "x":25, "y":420, "w":75,"h":20, "isHidden":True},
-            {"no": 2, "o":None, "title":"2", "x":125, "y":420, "w":75,"h":20, "isHidden":False},
-            {"no": 3, "o":None, "title":"3", "x":225, "y":420, "w":75,"h":20, "isHidden":False},
-            {"no": 4, "o":None, "title":"4", "x":325, "y":420, "w":75,"h":20, "isHidden":False},
-            {"no": 5, "o":None, "title":"5", "x":425, "y":420, "w":75,"h":20, "isHidden":False}
+            {"no": 1, "o":None, "title":"1", "x":25, "y":420, "w":75,"h":25, "isHidden":True},
+            {"no": 2, "o":None, "title":"2", "x":125, "y":420, "w":75,"h":25, "isHidden":False},
+            {"no": 3, "o":None, "title":"3", "x":225, "y":420, "w":75,"h":25, "isHidden":False},
+            {"no": 4, "o":None, "title":"4", "x":325, "y":420, "w":75,"h":25, "isHidden":False},
+            {"no": 5, "o":None, "title":"5", "x":425, "y":420, "w":75,"h":25, "isHidden":False}
         ]
         
         for spbox in self.spboxList:
@@ -336,6 +337,12 @@ class MainWindow(QMainWindow):
         self.btnSetPressure.resize(70, 25)
         self.btnSetPressure.clicked.connect(self.setPressure)
 
+        # 개밥주기 시간
+        self.spDogFeedTime = QSpinBox(self.autoPage)
+        self.spDogFeedTime.move(50, 310)
+        self.spDogFeedTime.resize(90, 25)
+        self.spDogFeedTime.setRange(0, 9999)
+        
         ###########################################################################################
         # 수동 레이아웃
         ###########################################################################################
@@ -538,9 +545,22 @@ class MainWindow(QMainWindow):
         # 자동모드 일때만,
         if bodyIndex == self.oIdxName["MODE_AUTO"]:
             if no == self.oIdxName["Dog_Feed"]:
-                self.isTaskRunning = False
-                self.printLine(no)
-                self.rpiOut(no, self.btnList[no-1]["isOpen"])
+                if self.isDogFeedRunning == False:
+                    Log.d(self.TAG, "[Start] 개밥주기")
+                    self.isDogFeedRunning = True
+                    # 버튼 색깔 처리
+                    self.printLine(no)
+                    self.rpiOut(no, self.btnList[no-1]["isOpen"])
+
+                    dogFeedTime = self.spDogFeedTime.value()
+                    print("개밥 시간 : ", dogFeedTime)
+
+                    self.dogFeedTimer = QTimer(self)
+                    self.dogFeedTimer.start(int(dogFeedTime) * 1000)
+                    self.dogFeedTimer.setSingleShot(True)
+                    self.dogFeedTimer.timeout.connect(self.onTimeout)
+                else:
+                    Log.d(self.TAG, "이미 개밥 주는 중...")
             else:
                 self.startTask(no)
 
@@ -564,6 +584,16 @@ class MainWindow(QMainWindow):
                     self.printLine(self.oIdxName["Valve4"])
                 self.rpiOut(self.oIdxName["Valve4"], isOpen=False)
     
+    def onTimeout(self):
+        sender = self.sender()
+        if sender == self.dogFeedTimer:
+            Log.d(self.TAG, "[End] 개밥주기")
+            # 버튼 색깔 처리
+            no = self.oIdxName["Dog_Feed"]
+            self.printLine(no)
+            self.rpiOut(no, self.btnList[no-1]["isOpen"])
+            self.isDogFeedRunning = False
+
     # 자동모드 시작
     def startTask(self, no):
         """자동모드 시작
@@ -732,6 +762,13 @@ class MainWindow(QMainWindow):
                         self.rpiOut(valveNo, isOpen=False)
                         # 0초 되면, 다음걸로 넘어가기
                         self.nextValve(valveNo)
+        if self.isDogFeedRunning == True:
+            nDogTime = self.spDogFeedTime.value()
+            nDogTime = nDogTime - 1
+            if nDogTime > 0:
+                self.spDogFeedTime.setValue(nDogTime)
+            else:
+                self.spDogFeedTime.setValue(0)
 
     # 다음 밸브처리
     def nextValve(self, valveNo):
