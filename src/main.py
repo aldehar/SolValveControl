@@ -22,6 +22,8 @@ class MainWindow(QMainWindow):
     
     startPressure = 0.5
 
+    dogFeedTimer = None
+
     def __init__(self):
         """생성자
         """
@@ -451,7 +453,8 @@ class MainWindow(QMainWindow):
             self.isTaskRunning = False
             # 개밥 타이머 정지
             self.oDogFeed["isRunning"] = False
-            self.dogFeedTimer.stop()
+            if self.dogFeedTimer != None:
+                self.dogFeedTimer.stop()
 
             self.lblMode.setText("수동모드")
             self.btnOnOff.setStyleSheet("background-image : url({});background-repeat: no-repeat;".format(self.oImg["off"]))
