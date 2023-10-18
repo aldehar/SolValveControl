@@ -5,7 +5,7 @@ import copy
 from functools import partial
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel,QSpinBox, QComboBox, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea, QMessageBox, QDesktopWidget, QLineEdit
 from PyQt5.QtGui import *
-from PyQt5.QtCore import Qt, QObject, pyqtSlot, pyqtSignal, QThread, QTimer
+from PyQt5.QtCore import Qt, QObject, pyqtSlot, pyqtSignal, QThread, QTimer, QSettings
 from PyQt5 import QtCore
 
 import RPiManager
@@ -20,7 +20,8 @@ class MainWindow(QMainWindow):
         "feedTime" : 45
     }
     
-    startPressure = 0.5
+    # 설정파일(config.ini)에서 파일을 못읽어왓을때 기본값
+    startPressure = 1.0
 
     dogFeedTimer = None
 
@@ -44,6 +45,34 @@ class MainWindow(QMainWindow):
         for cb in self.cbList:
             cb["o"].currentIndexChanged.connect(partial(self.onCbChanged, cb["no"]))
 
+    # ini 파일에서 세팅값 읽어오기
+    def loadSetting(self):
+        oSetting = {
+            "isCorrect" : False
+        }
+
+        try:
+            self.settings = QSettings("config.ini", QSettings.IniFormat)
+            oSetting["Sequence"] = self.settings.value("SETTING/Sequence")
+            oSetting["valve1"] = self.settings.value("SETTING/valve1")
+            oSetting["valve2"] = self.settings.value("SETTING/valve2")
+            oSetting["valve3"] = self.settings.value("SETTING/valve3")
+            oSetting["valve5"] = self.settings.value("SETTING/valve5")
+            oSetting["feedTime"] = self.settings.value("SETTING/feed_time")
+            # 개밥 시간
+            self.oDogFeed["feedTime"] = self.parseTime(oSetting["feedTime"])
+            self.spDogFeedTime.setValue(self.oDogFeed["feedTime"])
+            # 동작압력
+            self.startPressure = float(self.settings.value("SETTING/pressure"))
+            self.edPressure.setText(str(self.startPressure))
+
+            oSetting["isCorrect"] = True
+
+        except Exception as e:
+            Log.e(self.TAG, str(e))
+
+        return oSetting
+    
     # 초기 스케쥴 시간 설정
     def setSchedule(self):
         """초기 스케쥴 시간 설정
@@ -51,19 +80,49 @@ class MainWindow(QMainWindow):
         """
         self.unitFactor = {"h":3600, "m":60, "s":1}
 
-        self.initQueue = [
-            {"no":1, "valve":4, "period":"-1s", "remain":-1, "isSeq":False, "parent":0},
-            {"no":2, "valve":1, "period":"8s", "remain":8, "isSeq":True, "parent":4},
-            {"no":3, "valve":2, "period":"6s", "remain":6, "isSeq":True, "parent":4},
-            {"no":4, "valve":3, "period":"7s", "remain":7, "isSeq":False, "parent":4},
-            {"no":5, "valve":5, "period":"5s", "remain":5, "isSeq":False, "parent":0}
-        ]
+        oSetting = self.loadSetting()
+        Log.d(self.TAG, "설정에서 불러온 값 : {}".format(oSetting))
+
+        if oSetting["isCorrect"]:
+            # 설정 파일 불러오기 성공 시,
+            self.initQueue = []
+
+            self.initQueue.append({"no":1, "valve":4, "period":"-1s", "remain":-1})
+            no = 2
+
+            strSeqList = oSetting["Sequence"]
+            seqList = strSeqList.split(",")
+            tempList = []
+            for idx, valveNo in enumerate(seqList):
+                o = {
+                    "no" : idx + 1,
+                    "valve":valveNo
+                }
+                tempList.append(o)
+
+            for o in tempList:
+                o["no"] = no
+                o["period"] = oSetting["valve"+o["valve"]]
+                o["remain"] = self.parseTime(o["period"])
+                no = no + 1
+
+            self.initQueue = self.initQueue + tempList
+            Log.d(self.TAG, "설정에서 불러온 initQueue 값 : {}".format(self.initQueue)) 
+        else:
+            # 설정파일 불러오기 실패 시,
+            self.initQueue = [
+                {"no":1, "valve":4, "period":"-1s", "remain":-1},
+                {"no":2, "valve":1, "period":"8s", "remain":8},
+                {"no":3, "valve":2, "period":"6s", "remain":6},
+                {"no":4, "valve":3, "period":"7s", "remain":7},
+                {"no":5, "valve":5, "period":"5s", "remain":5}
+            ]
 
         self.resetQueue()
         self.isTaskRunning = False
 
     # 시간 파싱
-    def parseTime(strTime):
+    def parseTime(self, strTime):
         """시간 파싱
 
         Args:
@@ -92,7 +151,8 @@ class MainWindow(QMainWindow):
                 # unit(h,m,s) 뒤 부터 파싱
                 idx = nn + 1
             except Exception as e:
-                Log.d("==> parseTime() Exception cause : {} ,maybe factor unit not exist in string => s = {} , o = {}".format(e, strTime, o))
+                #Log.d(self.TAG, "==> parseTime() Exception cause : {} ,maybe factor unit not exist in string => s = {} , o = {}".format(e, strTime, o))
+                pass
         
         return totalTime
 
@@ -349,7 +409,7 @@ class MainWindow(QMainWindow):
         self.spDogFeedTime.move(50, 310)
         self.spDogFeedTime.resize(90, 25)
         self.spDogFeedTime.setRange(0, 9999)
-        self.spDogFeedTime.setValue(self.oDogFeed["feedTime"])
+        self.spDogFeedTime.setValue(int(self.oDogFeed["feedTime"]))
         
         ###########################################################################################
         # 수동 레이아웃
@@ -413,7 +473,7 @@ class MainWindow(QMainWindow):
             {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[2, 4, 6]},
             {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[10]},
             {"no":6, "o":None, "title":"M", "isOpen":False, "x":140, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[5, 8, 9]},
-            {"no":7, "o":None, "title":"Dog", "isOpen":False, "x":50, "y":250, "w":90,"h":60, "img":self.oImg["dog_feed_off"], "lineList":[]}
+            {"no":7, "o":None, "title":"", "isOpen":False, "x":50, "y":250, "w":90,"h":60, "img":self.oImg["dog_feed_off"], "lineList":[]}
         ]
         
         for btn in self.manualBtnList:
@@ -765,9 +825,9 @@ class MainWindow(QMainWindow):
                         oSpbox.setValue(spboxValue)
                         # 남은 시간 저장하게 매초 넣게 수정
                         nowValveIdx = -1
-                        if valveNo >= 1 and valveNo <= 3:
+                        if valveNo >= self.oIdxName["Valve1"] and valveNo <= self.oIdxName["Valve3"]:
                             nowValveIdx = idx - 1
-                        elif valveNo == 5:
+                        elif valveNo == self.oIdxName["Valve5"]:
                             nowValveIdx = 3
                         self.taskNoticeQueue[nowValveIdx]["remain"] = str(spboxValue)
 
@@ -893,6 +953,40 @@ class MainWindow(QMainWindow):
         self.startPressure = float(strPressure)
         Log.i(self.TAG, "압력 설정값 바뀜 {} ===> {}".format(prevPressure, strPressure))
 
+    # 현재 상태값(밸브순서, 설정한 초, 압력) 저장
+    def saveSetting(self):
+        # 작업 큐 초기화
+        self.taskQueue.clear()
+
+        # 콤보박스의 값을 작업 큐에 넣기
+        for idx, cb in enumerate(self.cbList):
+            oCb = cb["o"]
+            cbIdx = oCb.currentIndex()
+            # 현재 스핀박스의 값 가져오기
+            vSp = self.spboxList[idx]["o"].value()
+
+            oTemp = {}
+            oTemp["no"] = cb["no"]
+            oTemp["valve"] = cbIdx + 1
+            oTemp["period"] = str(vSp) + "s"
+            if oTemp["valve"] != self.oIdxName["Valve4"]:
+                self.taskQueue.append(oTemp)
+        
+        # 초기 큐 값을 현재의 큐 값으로 세팅(1사이클 돌아도 세팅된 값으로 저장되게함)
+        self.initQueue.clear()
+        self.initQueue = copy.deepcopy(self.taskQueue)
+
+        seqList = []
+        for i, o in enumerate(self.initQueue):
+            no = o["valve"]
+            if no != 4:
+                seqList.append(no)
+                self.settings.setValue("SETTING/valve"+str(o["valve"]), o["period"])
+
+        self.settings.setValue("SETTING/Sequence", ",".join(map(str, seqList)).replace("\"", ""))
+        self.settings.setValue("SETTING/feed_time", str(self.spDogFeedTime.value()) +"s")
+        self.settings.setValue("SETTING/pressure", self.startPressure)
+
     #윈도우 닫을때
     def closeEvent(self, event):
         Log.d(self.TAG, "close window...")
@@ -901,6 +995,8 @@ class MainWindow(QMainWindow):
         self.timeWorker.quit()
         # 라즈베리파이 자원 해제
         self.rpiUtil.release()
+        # 설정값 저장
+        self.saveSetting()
         event.accept()
 
     @pyqtSlot(str)
