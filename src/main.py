@@ -179,8 +179,8 @@ class MainWindow(QMainWindow):
         # 제일 앞, 뒤의 것 제거
         self.taskQueue.pop(0)
         self.taskQueue.pop()
-        
-        Log.d(self.TAG, ">> ".format(self.taskQueue))
+
+        Log.d(self.TAG, "Queue - {}".format(self.taskQueue))
 
     def moveToCenter(self):
         qr = self.frameGeometry()
@@ -313,11 +313,11 @@ class MainWindow(QMainWindow):
 
         # 활성화/비활성화 버튼
         self.btnEnableList = [
-            {"no":1, "o":None, "title":"비활성화", "isEnable":False, "x":25, "y":360, "w":75,"h":20},
-            {"no":2, "o":None, "title":"비활성화", "isEnable":False, "x":125, "y":360, "w":75,"h":20},
-            {"no":3, "o":None, "title":"비활성화", "isEnable":False, "x":225, "y":360, "w":75,"h":20},
-            {"no":4, "o":None, "title":"비활성화", "isEnable":False, "x":325, "y":360, "w":75,"h":20},
-            {"no":5, "o":None, "title":"비활성화", "isEnable":False, "x":425, "y":360, "w":75,"h":20}
+            {"no":1, "o":None, "title":"비활성화", "isEnable":False, "x":25, "y":360, "w":90,"h":20},
+            {"no":2, "o":None, "title":"비활성화", "isEnable":False, "x":125, "y":360, "w":90,"h":20},
+            {"no":3, "o":None, "title":"비활성화", "isEnable":False, "x":225, "y":360, "w":90,"h":20},
+            {"no":4, "o":None, "title":"비활성화", "isEnable":False, "x":325, "y":360, "w":90,"h":20},
+            {"no":5, "o":None, "title":"비활성화", "isEnable":False, "x":425, "y":360, "w":90,"h":20}
         ]
 
         for btn in self.btnEnableList:
@@ -331,20 +331,21 @@ class MainWindow(QMainWindow):
 
         # 콤보박스 - 밸브선택
         self.cbList = [
-            {"no":1, "o":None, "title":"1", "x":25, "y":390, "w":75,"h":20},
-            {"no":2, "o":None, "title":"2", "x":125, "y":390, "w":75,"h":20},
-            {"no":3, "o":None, "title":"3", "x":225, "y":390, "w":75,"h":20},
-            {"no":4, "o":None, "title":"4", "x":325, "y":390, "w":75,"h":20},
-            {"no":5, "o":None, "title":"5", "x":425, "y":390, "w":75,"h":20}
+            {"no":1, "o":None, "title":"1", "x":25, "y":390, "w":90,"h":25},
+            {"no":2, "o":None, "title":"2", "x":125, "y":390, "w":90,"h":25},
+            {"no":3, "o":None, "title":"3", "x":225, "y":390, "w":90,"h":25},
+            {"no":4, "o":None, "title":"4", "x":325, "y":390, "w":90,"h":25},
+            {"no":5, "o":None, "title":"5", "x":425, "y":390, "w":90,"h":25}
         ]
         
-        for cb in self.cbList:
+        for i, cb in enumerate(self.cbList):
             cb["o"] = QComboBox(self.autoPage)
             cb["o"].addItem("Valve 1")
             cb["o"].addItem("Valve 2")
             cb["o"].addItem("Valve 3")
             cb["o"].addItem("Valve 4")
             cb["o"].addItem("Valve 5")
+                
             cb["o"].move(cb["x"], cb["y"])
             cb["o"].resize(cb["w"], cb["h"])
             #cb["o"].setCurrentIndex(int(cb["title"])-1)
@@ -370,11 +371,11 @@ class MainWindow(QMainWindow):
 
         # 밸브 초 라벨
         self.timeLblList = [
-            {"no": 1, "o":None, "title":"초", "x":100, "y":420, "w":20,"h":20, "isHidden":True},
-            {"no": 2, "o":None, "title":"초", "x":200, "y":420, "w":20,"h":20, "isHidden":False},
-            {"no": 3, "o":None, "title":"초", "x":300, "y":420, "w":20,"h":20, "isHidden":False},
-            {"no": 4, "o":None, "title":"초", "x":400, "y":420, "w":20,"h":20, "isHidden":False},
-            {"no": 5, "o":None, "title":"초", "x":500, "y":420, "w":20,"h":20, "isHidden":False}
+            {"no": 1, "o":None, "title":"초", "x":105, "y":425, "w":20,"h":20, "isHidden":True},
+            {"no": 2, "o":None, "title":"초", "x":205, "y":425, "w":20,"h":20, "isHidden":False},
+            {"no": 3, "o":None, "title":"초", "x":305, "y":425, "w":20,"h":20, "isHidden":False},
+            {"no": 4, "o":None, "title":"초", "x":405, "y":425, "w":20,"h":20, "isHidden":False},
+            {"no": 5, "o":None, "title":"초", "x":505, "y":425, "w":20,"h":20, "isHidden":False}
         ]
         
         for lbl in self.timeLblList:
