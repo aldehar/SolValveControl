@@ -53,7 +53,7 @@ class MainWindow(QMainWindow):
 
         try:
             self.settings = QSettings("config.ini", QSettings.IniFormat)
-            oSetting["Sequence"] = self.settings.value("SETTING/Sequence")
+            strSeq = self.settings.value("SETTING/Sequence")
             oSetting["valve1"] = self.settings.value("SETTING/valve1")
             oSetting["valve2"] = self.settings.value("SETTING/valve2")
             oSetting["valve3"] = self.settings.value("SETTING/valve3")
@@ -66,7 +66,11 @@ class MainWindow(QMainWindow):
             self.startPressure = float(self.settings.value("SETTING/pressure"))
             self.edPressure.setText(str(self.startPressure))
 
-            oSetting["isCorrect"] = True
+            if strSeq.find("0") >= 0:
+                oSetting["isCorrect"] = False
+            else:
+                oSetting["Sequence"] = strSeq
+                oSetting["isCorrect"] = True
 
         except Exception as e:
             Log.e(self.TAG, str(e))
@@ -87,9 +91,6 @@ class MainWindow(QMainWindow):
             # 설정 파일 불러오기 성공 시,
             self.initQueue = []
 
-            self.initQueue.append({"no":1, "valve":4, "period":"-1s", "remain":-1})
-            no = 2
-
             strSeqList = oSetting["Sequence"]
             seqList = strSeqList.split(",")
             tempList = []
@@ -100,22 +101,28 @@ class MainWindow(QMainWindow):
                 }
                 tempList.append(o)
 
-            for o in tempList:
-                o["no"] = no
-                o["period"] = oSetting["valve"+o["valve"]]
-                o["remain"] = self.parseTime(o["period"])
-                no = no + 1
+            no = 1
+            try:
 
-            self.initQueue = self.initQueue + tempList
-            Log.d(self.TAG, "설정에서 불러온 initQueue 값 : {}".format(self.initQueue)) 
+                for o in tempList:
+                    o["no"] = no
+                    o["period"] = oSetting["valve"+o["valve"]]
+                    o["remain"] = self.parseTime(o["period"])
+                    no = no + 1
+
+                self.initQueue = self.initQueue + tempList
+                Log.d(self.TAG, "설정에서 불러온 initQueue 값 : {}".format(self.initQueue))
+            except Exception as e:
+                errMsg = "저장된 세팅 불러오기 중 오류가 발생되었습니다. 사유 : {}".format(e)
+                Log.e(self.TAG, errMsg)
+                QMessageBox.critical(self, "저장된 세팅 불러오기 오류", "{}\n 'config.ini' 파일을 확인해보세요.".format(errMsg))
         else:
             # 설정파일 불러오기 실패 시,
             self.initQueue = [
-                {"no":1, "valve":4, "period":"-1s", "remain":-1},
-                {"no":2, "valve":1, "period":"8s", "remain":8},
-                {"no":3, "valve":2, "period":"6s", "remain":6},
-                {"no":4, "valve":3, "period":"7s", "remain":7},
-                {"no":5, "valve":5, "period":"5s", "remain":5}
+                {"no":1, "valve":1, "period":"8s", "remain":8},
+                {"no":2, "valve":2, "period":"6s", "remain":6},
+                {"no":3, "valve":3, "period":"7s", "remain":7},
+                {"no":4, "valve":5, "period":"5s", "remain":5}
             ]
 
         self.resetQueue()
@@ -172,13 +179,14 @@ class MainWindow(QMainWindow):
             period = nTime * factor
             idx = dSchedule["no"]-1
             
-            self.cbList[idx]["o"].setCurrentIndex(valveNo-1)
+            if valveNo == self.oIdxName["Valve5"]:
+                # 4번 밸브가 콤보박스에서 빠졌기때문에 Vavle1,2,3,5 라서 5번인 경우, index가 3임
+                self.cbList[idx]["o"].setCurrentIndex(valveNo-2)
+            else:
+                self.cbList[idx]["o"].setCurrentIndex(valveNo-1)
+
             self.cbList[idx]["title"] = str(valveNo)
             self.spboxList[idx]["o"].setValue(int(period))
-        
-        # 제일 앞, 뒤의 것 제거
-        self.taskQueue.pop(0)
-        self.taskQueue.pop()
 
         Log.d(self.TAG, "Queue - {}".format(self.taskQueue))
 
@@ -329,34 +337,39 @@ class MainWindow(QMainWindow):
             btn["o"].setStyleSheet("background-color : orange; color:black;")
             #btn["o"].clicked.connect(partial(self.onEnableBtnClicked, btn["no"]))
 
+        # 4번 밸브
+        lbValve4 = QLabel(self.autoPage)
+        lbValve4.setText("Valve 4")
+        lbValve4.setStyleSheet("background-color :#e1e1e1; border: 1px solid #adadad;")
+        lbValve4.setAlignment(Qt.AlignCenter)
+        lbValve4.move(25, 390)
+        lbValve4.resize(90, 25)
+
         # 콤보박스 - 밸브선택
         self.cbList = [
-            {"no":1, "o":None, "title":"1", "x":25, "y":390, "w":90,"h":25},
-            {"no":2, "o":None, "title":"2", "x":125, "y":390, "w":90,"h":25},
-            {"no":3, "o":None, "title":"3", "x":225, "y":390, "w":90,"h":25},
-            {"no":4, "o":None, "title":"4", "x":325, "y":390, "w":90,"h":25},
-            {"no":5, "o":None, "title":"5", "x":425, "y":390, "w":90,"h":25}
+            {"no":1, "o":None, "title":"2", "x":125, "y":390, "w":90,"h":25},
+            {"no":2, "o":None, "title":"3", "x":225, "y":390, "w":90,"h":25},
+            {"no":3, "o":None, "title":"4", "x":325, "y":390, "w":90,"h":25},
+            {"no":4, "o":None, "title":"5", "x":425, "y":390, "w":90,"h":25}
         ]
         
-        for i, cb in enumerate(self.cbList):
+        for cb in self.cbList:
             cb["o"] = QComboBox(self.autoPage)
             cb["o"].addItem("Valve 1")
             cb["o"].addItem("Valve 2")
             cb["o"].addItem("Valve 3")
-            cb["o"].addItem("Valve 4")
             cb["o"].addItem("Valve 5")
                 
             cb["o"].move(cb["x"], cb["y"])
             cb["o"].resize(cb["w"], cb["h"])
-            #cb["o"].setCurrentIndex(int(cb["title"])-1)
+            #cb["o"].setCurrentIndex(cb["no"]-1)
         
         # 밸브 초 값 스핀박스
         self.spboxList = [
-            {"no": 1, "o":None, "title":"1", "x":25, "y":420, "w":75,"h":25, "isHidden":True},
-            {"no": 2, "o":None, "title":"2", "x":125, "y":420, "w":75,"h":25, "isHidden":False},
-            {"no": 3, "o":None, "title":"3", "x":225, "y":420, "w":75,"h":25, "isHidden":False},
-            {"no": 4, "o":None, "title":"4", "x":325, "y":420, "w":75,"h":25, "isHidden":False},
-            {"no": 5, "o":None, "title":"5", "x":425, "y":420, "w":75,"h":25, "isHidden":False}
+            {"no": 1, "o":None, "title":"2", "x":125, "y":420, "w":75,"h":25, "isHidden":False},
+            {"no": 2, "o":None, "title":"3", "x":225, "y":420, "w":75,"h":25, "isHidden":False},
+            {"no": 3, "o":None, "title":"4", "x":325, "y":420, "w":75,"h":25, "isHidden":False},
+            {"no": 4, "o":None, "title":"5", "x":425, "y":420, "w":75,"h":25, "isHidden":False}
         ]
         
         for spbox in self.spboxList:
@@ -631,7 +644,7 @@ class MainWindow(QMainWindow):
 
                     dogFeedTime = self.spDogFeedTime.value()
                     self.oDogFeed["feedTime"] = dogFeedTime
-                    print("개밥 시간 : ", dogFeedTime)
+                    Log.i(self.TAG, "개밥 시간 : {}".format(dogFeedTime))
 
                     self.dogFeedTimer = QTimer(self)
                     self.dogFeedTimer.start(int(dogFeedTime) * 1000)
@@ -700,10 +713,16 @@ class MainWindow(QMainWindow):
 
             oTemp = {}
             oTemp["no"] = cb["no"]
-            oTemp["valve"] = cbIdx + 1
+
+            # Valve5일때, 4없는것으로 인해 처리
+            if cbIdx == 3:
+                oTemp["valve"] = cbIdx + 2
+            else:
+                oTemp["valve"] = cbIdx + 1
+
             oTemp["period"] = str(vSp) + "s"
-            if oTemp["valve"] != self.oIdxName["Valve4"]:
-                self.taskQueue.append(oTemp)
+            
+            self.taskQueue.append(oTemp)
         
         # 초기 큐 값을 현재의 큐 값으로 세팅(1사이클 돌아도 세팅된 값으로 저장되게함)
         self.initQueue.clear()
@@ -811,14 +830,15 @@ class MainWindow(QMainWindow):
     def checkBtnActive(self):
         """활성화/비활성화 버튼 체크
         """
-        for idx, spbox in enumerate(self.spboxList):
-            # cb0이 아니면,(4번 밸브가 아니면,)
-            if idx != 0:
-                jBtn = self.btnEnableList[idx]
-                oBtn = jBtn["o"]
+        for btnIdx, dBtn in enumerate(self.btnEnableList):
+            # 0번 활성화 버튼 4번 밸브 버튼, 4번은 combobox, spinbox가 없다.
+            if btnIdx != 0:
+                spIdx = btnIdx -1
+                spbox = self.spboxList[spIdx]
+                oBtn = dBtn["o"]
                 strBtn = oBtn.text()
                 if strBtn == "활성화":
-                    valveNo = int(self.cbList[idx]["o"].currentText()[-1:])
+                    valveNo = int(self.cbList[spIdx]["o"].currentText()[-1:])
                     oSpbox = spbox["o"]
                     spboxValue = int(oSpbox.value())
                     if spboxValue > 0:
@@ -827,7 +847,7 @@ class MainWindow(QMainWindow):
                         # 남은 시간 저장하게 매초 넣게 수정
                         nowValveIdx = -1
                         if valveNo >= self.oIdxName["Valve1"] and valveNo <= self.oIdxName["Valve3"]:
-                            nowValveIdx = idx - 1
+                            nowValveIdx = spIdx - 1
                         elif valveNo == self.oIdxName["Valve5"]:
                             nowValveIdx = 3
                         self.taskNoticeQueue[nowValveIdx]["remain"] = str(spboxValue)
@@ -878,13 +898,14 @@ class MainWindow(QMainWindow):
 
             self.spboxList[idx]["o"].setValue(int(nTime))
             self.cbList[idx]["title"] = "Valve {}".format(nowValveNo)
-            self.btnEnableList[idx]["o"].setText("활성화")
-            self.btnEnableList[idx]["o"].setStyleSheet("background-color : green; color : black;")
+            self.btnEnableList[nowTask["no"]]["o"].setText("활성화")
+            self.btnEnableList[nowTask["no"]]["o"].setStyleSheet("background-color : green; color : black;")
             # 현재 밸브 처리(GUI-선색깔)
             self.printLine(nowValveNo)
             # GPIO 열기
             self.rpiOut(nowValveNo, isOpen=True)
 
+            # Valve 4, 5 인터록 처리
             if nowValveNo >= self.oIdxName["Valve1"] and nowValveNo <= self.oIdxName["Valve3"]:
                 if self.btnList[self.oIdxName["Valve4"]-1]["isOpen"] == False:
                     self.printLine(self.oIdxName["Valve4"])
@@ -924,7 +945,7 @@ class MainWindow(QMainWindow):
             o (dictionary): ex> {'ch': 0, 'read': [1, 128, 0], 'outAdc': 0, 'v': 0.0, 'pressure':0.0}
         """
         # for debug
-        Log.d(self.TAG, "SPI >>> {}".format(str(o)))
+        #Log.d(self.TAG, "SPI >>> {}".format(str(o)))
         
         pressure = o["pressure"]
         txtPressure = ""
@@ -967,11 +988,15 @@ class MainWindow(QMainWindow):
             vSp = self.spboxList[idx]["o"].value()
 
             oTemp = {}
-            oTemp["no"] = cb["no"]
-            oTemp["valve"] = cbIdx + 1
+            oTemp["no"] = cb["no"]            
             oTemp["period"] = str(vSp) + "s"
-            if oTemp["valve"] != self.oIdxName["Valve4"]:
-                self.taskQueue.append(oTemp)
+            
+            if (cbIdx + 1) == self.oIdxName["Valve4"]:
+                oTemp["valve"] = self.oIdxName["Valve5"]
+            else:
+                oTemp["valve"] = cbIdx + 1
+
+            self.taskQueue.append(oTemp)
         
         # 초기 큐 값을 현재의 큐 값으로 세팅(1사이클 돌아도 세팅된 값으로 저장되게함)
         self.initQueue.clear()
@@ -980,9 +1005,10 @@ class MainWindow(QMainWindow):
         seqList = []
         for i, o in enumerate(self.initQueue):
             no = o["valve"]
-            if no != 4:
-                seqList.append(no)
-                self.settings.setValue("SETTING/valve"+str(o["valve"]), o["period"])
+            if no == self.oIdxName["Valve4"]:
+                no = self.oIdxName["Valve5"]
+            seqList.append(no)
+            self.settings.setValue("SETTING/valve"+str(o["valve"]), o["period"])
 
         self.settings.setValue("SETTING/Sequence", ",".join(map(str, seqList)).replace("\"", ""))
         self.settings.setValue("SETTING/feed_time", str(self.spDogFeedTime.value()) +"s")
