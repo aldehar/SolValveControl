@@ -993,6 +993,19 @@ class MainWindow(QMainWindow):
                 # @TODO 일시정지 처리
                 #self.isPause = True
                 self.isTaskRunning = False
+
+                # 모든 밸브 정지
+                for o in self.btnList:
+                    self.rpiUtil.setOutput(no=o["no"], isHigh=False)
+                    o["isOpen"] = False
+
+                    no = int(o["no"])
+                    if no == self.oIdxName["Motor"]:
+                        o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["pump_off"]))
+                    elif no == self.oIdxName["Dog_Feed"]:
+                        o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["dog_feed_off"]))
+                    else:
+                        o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["valve_off"]))
     
     # 압력 설정값 변경될 때,
     def setPressure(self):
