@@ -991,7 +991,7 @@ class MainWindow(QMainWindow):
             if self.isTaskRunning:
                 Log.d(self.TAG, "{} bar ↓ = {} bar".format(self.stopPressure, pressure))
                 # @TODO 일시정지 처리
-                #self.isPause = True
+                self.isPause = True
                 self.isTaskRunning = False
 
                 # 모든 밸브 정지
@@ -1006,6 +1006,10 @@ class MainWindow(QMainWindow):
                         o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["dog_feed_off"]))
                     else:
                         o["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(self.oImg["valve_off"]))
+
+                    # 라인 off 색으로
+                    for o in self.lineList:
+                        o["o"].setStyleSheet("background-color:{};".format("blue"))
     
     # 압력 설정값 변경될 때,
     def setPressure(self):
