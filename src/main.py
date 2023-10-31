@@ -981,6 +981,18 @@ class MainWindow(QMainWindow):
             if self.isTaskRunning == False and self.body.currentIndex() == self.oIdxName["MODE_AUTO"]:
                 Log.d(self.TAG, "Auto mode Start...!")
                 if self.isPause:
+                    # 활성화된 버튼 index 검색
+                    for idx, oBtn in enumerate(self.btnEnableList):
+                        if oBtn["o"].text() == "활성화":
+                            valveNo = int(self.cbList[idx]["o"].currentText()[-1:])
+                            # 밸브 켠다.
+                            self.rpiUtil.setOutput(no=valveNo, isHigh=True)
+                            # 줄 색깔 on 색깔(빨강)로 변경
+                            lineList = self.btnList[valveNo-1]["lineList"]
+                            for lineNum in lineList:
+                                o = self.lineList[lineNum-1]
+                                o["o"].setStyleSheet("background-color:{};".format("red"))
+
                     self.isPause = False
                 else:
                     self.startTask(self.oIdxName["Motor"])
@@ -992,7 +1004,7 @@ class MainWindow(QMainWindow):
         elif pressure <= self.stopPressure:
             if self.isTaskRunning:
                 Log.d(self.TAG, "{} bar ↓ = {} bar".format(self.stopPressure, pressure))
-                # @TODO 일시정지 처리
+                # 일시정지 처리
                 self.isPause = True
                 self.isTaskRunning = False
 
