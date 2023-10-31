@@ -345,6 +345,13 @@ class MainWindow(QMainWindow):
         lbValve4.move(25, 390)
         lbValve4.resize(90, 25)
 
+        # 시간설정 버튼
+        self.btnSetTime = QPushButton(self.autoPage)
+        self.btnSetTime.setText("시간 저장")
+        self.btnSetTime.move(25, 420)
+        self.btnSetTime.resize(90, 25)
+        self.btnSetTime.clicked.connect(self.onBtnClicked)
+
         # 콤보박스 - 밸브선택
         self.cbList = [
             {"no":1, "o":None, "title":"2", "x":125, "y":390, "w":90,"h":25},
@@ -629,7 +636,12 @@ class MainWindow(QMainWindow):
         Args:
             no (int): 버튼 번호
         """
-        
+
+        # 시간 저장
+        if self.sender() == self.btnSetTime:
+            self.saveSetting()
+            return
+
         bodyIndex = self.body.currentIndex()
 
         # 자동모드 일때만,
@@ -700,6 +712,18 @@ class MainWindow(QMainWindow):
             Log.w(self.TAG, ">> 이미 작업 중 입니다.")
             return
         
+        self.saveTime()
+
+        # 모터 버튼 클릭 시,(임시)
+        if no == self.oIdxName["Motor"]:
+            self.isTaskRunning = True
+            self.printLine(no)
+            self.nextValve(no)
+
+    # 시간 저장
+    def saveTime(self):
+        """콤보박스의 시간 저장
+        """
         # 작업 큐 초기화
         self.taskQueue.clear()
         self.taskNoticeQueue.clear()
@@ -714,9 +738,8 @@ class MainWindow(QMainWindow):
             oTemp = {}
             oTemp["no"] = cb["no"]
 
-            # Valve5일때, 4없는것으로 인해 처리
-            if cbIdx == 3:
-                oTemp["valve"] = cbIdx + 2
+            if (cbIdx + 1) == self.oIdxName["Valve4"]:
+                oTemp["valve"] = self.oIdxName["Valve5"]
             else:
                 oTemp["valve"] = cbIdx + 1
 
@@ -728,12 +751,6 @@ class MainWindow(QMainWindow):
         self.initQueue.clear()
         self.initQueue = copy.deepcopy(self.taskQueue)
         self.taskNoticeQueue = copy.deepcopy(self.taskQueue)
-
-        # 모터 버튼 클릭 시,(임시)
-        if no == self.oIdxName["Motor"]:
-            self.isTaskRunning = True
-            self.printLine(no)
-            self.nextValve(no)
 
     # 배관 선 색깔 표시
     def printLine(self, no):
@@ -977,30 +994,7 @@ class MainWindow(QMainWindow):
 
     # 현재 상태값(밸브순서, 설정한 초, 압력) 저장
     def saveSetting(self):
-        # 작업 큐 초기화
-        self.taskQueue.clear()
-
-        # 콤보박스의 값을 작업 큐에 넣기
-        for idx, cb in enumerate(self.cbList):
-            oCb = cb["o"]
-            cbIdx = oCb.currentIndex()
-            # 현재 스핀박스의 값 가져오기
-            vSp = self.spboxList[idx]["o"].value()
-
-            oTemp = {}
-            oTemp["no"] = cb["no"]            
-            oTemp["period"] = str(vSp) + "s"
-            
-            if (cbIdx + 1) == self.oIdxName["Valve4"]:
-                oTemp["valve"] = self.oIdxName["Valve5"]
-            else:
-                oTemp["valve"] = cbIdx + 1
-
-            self.taskQueue.append(oTemp)
-        
-        # 초기 큐 값을 현재의 큐 값으로 세팅(1사이클 돌아도 세팅된 값으로 저장되게함)
-        self.initQueue.clear()
-        self.initQueue = copy.deepcopy(self.taskQueue)
+        self.saveTime()
 
         seqList = []
         for i, o in enumerate(self.initQueue):
