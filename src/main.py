@@ -269,7 +269,7 @@ class MainWindow(QMainWindow):
 
         # 압력 게이지
         self.lbPressure = QLabel("-", self.autoPage)
-        self.lbPressure.move(210, 124)
+        self.lbPressure.move(210, 134)
         self.lbPressure.resize(300, 50)
         
         #선 - 왼쪽위에서 부터 1~10
@@ -421,16 +421,16 @@ class MainWindow(QMainWindow):
         self.edPressure.setText(str(self.startPressure))
         self.edPressure.resize(30, 25)
 
-        self.edStopPessure = QLineEdit(self.autoPage)
-        self.edStopPessure.move(540, 390)
-        self.edStopPessure.setText(str(self.stopPressure))
-        self.edStopPessure.resize(30, 25)
+        self.edStopPressure = QLineEdit(self.autoPage)
+        self.edStopPressure.move(540, 390)
+        self.edStopPressure.setText(str(self.stopPressure))
+        self.edStopPressure.resize(30, 25)
 
         lblBar = QLabel(self.autoPage)
         lblBar.setText("bar")
         lblBar.move(575, 400)
 
-        self.btnSetPressure = QPushButton(self.autoPage, text="압력 설정")
+        self.btnSetPressure = QPushButton(self.autoPage, text="압력 저장")
         self.btnSetPressure.move(505, 420)
         self.btnSetPressure.resize(80, 25)
         self.btnSetPressure.clicked.connect(self.setPressure)
@@ -728,7 +728,7 @@ class MainWindow(QMainWindow):
 
             # 압력값 저장된 상태로 복귀
             self.edPressure.setText(str(self.startPressure))
-            self.edStopPessure.setText(str(self.stopPressure))
+            self.edStopPressure.setText(str(self.stopPressure))
 
             self.saveTime()
             self.printLine(no)
@@ -968,7 +968,7 @@ class MainWindow(QMainWindow):
         pressure = o["pressure"]
         txtPressure = ""
         if pressure < 0:
-            txtPressure = "#0"
+            txtPressure = "{} bar(x)".format(pressure)
         else:
             txtPressure = "{} bar".format(pressure)
         
@@ -1028,7 +1028,7 @@ class MainWindow(QMainWindow):
     # 압력 설정값 변경될 때,
     def setPressure(self):
         strPressure = self.edPressure.text()
-        strStopPressure = self.edStopPessure.text()
+        strStopPressure = self.edStopPressure.text()
         prevPressure = self.startPressure
         prevStopPressure = self.stopPressure
 
@@ -1040,6 +1040,9 @@ class MainWindow(QMainWindow):
 
         if prevStopPressure != strStopPressure:
             Log.i(self.TAG, "중지 압력 설정값 바뀜 {} ===> {}".format(prevStopPressure, strStopPressure))
+
+        self.settings.setValue("SETTING/pressure", self.startPressure)
+        self.settings.setValue("SETTING/stopPressure", self.stopPressure)
 
     # 현재 상태값(밸브순서, 설정한 초, 압력) 저장
     def saveSetting(self):
@@ -1066,8 +1069,6 @@ class MainWindow(QMainWindow):
         self.timeWorker.quit()
         # 라즈베리파이 자원 해제
         self.rpiUtil.release()
-        # 설정값 저장
-        self.saveSetting()
         event.accept()
 
     @pyqtSlot(str)
