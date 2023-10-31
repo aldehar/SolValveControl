@@ -22,8 +22,12 @@ class MainWindow(QMainWindow):
     
     # 설정파일(config.ini)에서 파일을 못읽어왓을때 기본값
     startPressure = 1.0
+    stopPressure = 0.3
 
     dogFeedTimer = None
+    
+    isTaskRunning = False
+    isPause = False
 
     def __init__(self):
         """생성자
@@ -64,7 +68,9 @@ class MainWindow(QMainWindow):
             self.spDogFeedTime.setValue(self.oDogFeed["feedTime"])
             # 동작압력
             self.startPressure = float(self.settings.value("SETTING/pressure"))
+            self.stopPressure = float(self.settings.value("SETTING/stopPressure"))
             self.edPressure.setText(str(self.startPressure))
+            self.edStopPressure.setText(str(self.stopPressure))
 
             if strSeq.find("0") >= 0:
                 oSetting["isCorrect"] = False
@@ -80,7 +86,7 @@ class MainWindow(QMainWindow):
     # 초기 스케쥴 시간 설정
     def setSchedule(self):
         """초기 스케쥴 시간 설정
-            @TODO ini 파일에서 읽어오기?
+            (ini 파일에서 읽어오기)
         """
         self.unitFactor = {"h":3600, "m":60, "s":1}
 
@@ -262,9 +268,9 @@ class MainWindow(QMainWindow):
         self.lblBg.setStyleSheet("background-color:#e0e0e0;")
 
         # 압력 게이지
-        self.pressure = QLabel("-", self.autoPage)
-        self.pressure.move(210, 124)
-        self.pressure.resize(300, 50)
+        self.lbPressure = QLabel("-", self.autoPage)
+        self.lbPressure.move(210, 124)
+        self.lbPressure.resize(300, 50)
         
         #선 - 왼쪽위에서 부터 1~10
         self.lineList = [
@@ -321,11 +327,11 @@ class MainWindow(QMainWindow):
 
         # 활성화/비활성화 버튼
         self.btnEnableList = [
-            {"no":1, "o":None, "title":"비활성화", "isEnable":False, "x":25, "y":360, "w":90,"h":20},
-            {"no":2, "o":None, "title":"비활성화", "isEnable":False, "x":125, "y":360, "w":90,"h":20},
-            {"no":3, "o":None, "title":"비활성화", "isEnable":False, "x":225, "y":360, "w":90,"h":20},
-            {"no":4, "o":None, "title":"비활성화", "isEnable":False, "x":325, "y":360, "w":90,"h":20},
-            {"no":5, "o":None, "title":"비활성화", "isEnable":False, "x":425, "y":360, "w":90,"h":20}
+            {"no":1, "o":None, "title":"비활성화", "isEnable":False, "x":5, "y":360, "w":90,"h":20},
+            {"no":2, "o":None, "title":"비활성화", "isEnable":False, "x":105, "y":360, "w":90,"h":20},
+            {"no":3, "o":None, "title":"비활성화", "isEnable":False, "x":205, "y":360, "w":90,"h":20},
+            {"no":4, "o":None, "title":"비활성화", "isEnable":False, "x":305, "y":360, "w":90,"h":20},
+            {"no":5, "o":None, "title":"비활성화", "isEnable":False, "x":405, "y":360, "w":90,"h":20}
         ]
 
         for btn in self.btnEnableList:
@@ -335,29 +341,28 @@ class MainWindow(QMainWindow):
             # 비활성화 처리
             btn["o"].setEnabled(False)
             btn["o"].setStyleSheet("background-color : orange; color:black;")
-            #btn["o"].clicked.connect(partial(self.onEnableBtnClicked, btn["no"]))
 
         # 4번 밸브
         lbValve4 = QLabel(self.autoPage)
         lbValve4.setText("Valve 4")
         lbValve4.setStyleSheet("background-color :#e1e1e1; border: 1px solid #adadad;")
         lbValve4.setAlignment(Qt.AlignCenter)
-        lbValve4.move(25, 390)
+        lbValve4.move(5, 390)
         lbValve4.resize(90, 25)
 
         # 시간설정 버튼
         self.btnSetTime = QPushButton(self.autoPage)
         self.btnSetTime.setText("시간 저장")
-        self.btnSetTime.move(25, 420)
+        self.btnSetTime.move(5, 420)
         self.btnSetTime.resize(90, 25)
         self.btnSetTime.clicked.connect(self.onBtnClicked)
 
         # 콤보박스 - 밸브선택
         self.cbList = [
-            {"no":1, "o":None, "title":"2", "x":125, "y":390, "w":90,"h":25},
-            {"no":2, "o":None, "title":"3", "x":225, "y":390, "w":90,"h":25},
-            {"no":3, "o":None, "title":"4", "x":325, "y":390, "w":90,"h":25},
-            {"no":4, "o":None, "title":"5", "x":425, "y":390, "w":90,"h":25}
+            {"no":1, "o":None, "title":"2", "x":105, "y":390, "w":90,"h":25},
+            {"no":2, "o":None, "title":"3", "x":205, "y":390, "w":90,"h":25},
+            {"no":3, "o":None, "title":"4", "x":305, "y":390, "w":90,"h":25},
+            {"no":4, "o":None, "title":"5", "x":405, "y":390, "w":90,"h":25}
         ]
         
         for cb in self.cbList:
@@ -373,10 +378,10 @@ class MainWindow(QMainWindow):
         
         # 밸브 초 값 스핀박스
         self.spboxList = [
-            {"no": 1, "o":None, "title":"2", "x":125, "y":420, "w":75,"h":25, "isHidden":False},
-            {"no": 2, "o":None, "title":"3", "x":225, "y":420, "w":75,"h":25, "isHidden":False},
-            {"no": 3, "o":None, "title":"4", "x":325, "y":420, "w":75,"h":25, "isHidden":False},
-            {"no": 4, "o":None, "title":"5", "x":425, "y":420, "w":75,"h":25, "isHidden":False}
+            {"no": 1, "o":None, "title":"2", "x":105, "y":420, "w":75,"h":25, "isHidden":False},
+            {"no": 2, "o":None, "title":"3", "x":205, "y":420, "w":75,"h":25, "isHidden":False},
+            {"no": 3, "o":None, "title":"4", "x":305, "y":420, "w":75,"h":25, "isHidden":False},
+            {"no": 4, "o":None, "title":"5", "x":405, "y":420, "w":75,"h":25, "isHidden":False}
         ]
         
         for spbox in self.spboxList:
@@ -391,11 +396,11 @@ class MainWindow(QMainWindow):
 
         # 밸브 초 라벨
         self.timeLblList = [
-            {"no": 1, "o":None, "title":"초", "x":105, "y":425, "w":20,"h":20, "isHidden":True},
-            {"no": 2, "o":None, "title":"초", "x":205, "y":425, "w":20,"h":20, "isHidden":False},
-            {"no": 3, "o":None, "title":"초", "x":305, "y":425, "w":20,"h":20, "isHidden":False},
-            {"no": 4, "o":None, "title":"초", "x":405, "y":425, "w":20,"h":20, "isHidden":False},
-            {"no": 5, "o":None, "title":"초", "x":505, "y":425, "w":20,"h":20, "isHidden":False}
+            {"no": 1, "o":None, "title":"초", "x":85, "y":425, "w":20,"h":20, "isHidden":True},
+            {"no": 2, "o":None, "title":"초", "x":185, "y":425, "w":20,"h":20, "isHidden":False},
+            {"no": 3, "o":None, "title":"초", "x":285, "y":425, "w":20,"h":20, "isHidden":False},
+            {"no": 4, "o":None, "title":"초", "x":385, "y":425, "w":20,"h":20, "isHidden":False},
+            {"no": 5, "o":None, "title":"초", "x":485, "y":425, "w":20,"h":20, "isHidden":False}
         ]
         
         for lbl in self.timeLblList:
@@ -408,21 +413,26 @@ class MainWindow(QMainWindow):
         
         # 동작 압력 설정
         lblSetPressure = QLabel(self.autoPage)
-        lblSetPressure.setText("동작 압력")
-        lblSetPressure.move(525, 365)
+        lblSetPressure.setText("동작/중지 압력")
+        lblSetPressure.move(505, 365)
 
         self.edPressure = QLineEdit(self.autoPage)
-        self.edPressure.move(525, 390)
+        self.edPressure.move(505, 390)
         self.edPressure.setText(str(self.startPressure))
         self.edPressure.resize(30, 25)
 
+        self.edStopPessure = QLineEdit(self.autoPage)
+        self.edStopPessure.move(540, 390)
+        self.edStopPessure.setText(str(self.stopPressure))
+        self.edStopPessure.resize(30, 25)
+
         lblBar = QLabel(self.autoPage)
         lblBar.setText("bar")
-        lblBar.move(560, 400)
+        lblBar.move(575, 400)
 
         self.btnSetPressure = QPushButton(self.autoPage, text="압력 설정")
-        self.btnSetPressure.move(525, 420)
-        self.btnSetPressure.resize(70, 25)
+        self.btnSetPressure.move(505, 420)
+        self.btnSetPressure.resize(80, 25)
         self.btnSetPressure.clicked.connect(self.setPressure)
 
         # 개밥주기 시간
@@ -609,7 +619,7 @@ class MainWindow(QMainWindow):
             # 현재 no가 아니라면, (다른 cb의 no)
             if no != searchingNo:
                 otherText = dictCb["o"].currentText()
-                Log.d(self.TAG, ">> 중복 {} ===> {}".format(otherText, newStr))
+                Log.d(self.TAG, ">> 중복 우려 {} ===> {}".format(otherText, newStr))
                 if newStr == otherText:
                     isFound = True
                     break
@@ -712,11 +722,15 @@ class MainWindow(QMainWindow):
             Log.w(self.TAG, ">> 이미 작업 중 입니다.")
             return
         
-        self.saveTime()
-
         # 모터 버튼 클릭 시,(임시)
         if no == self.oIdxName["Motor"]:
             self.isTaskRunning = True
+
+            # 압력값 저장된 상태로 복귀
+            self.edPressure.setText(str(self.startPressure))
+            self.edStopPessure.setText(str(self.stopPressure))
+
+            self.saveTime()
             self.printLine(no)
             self.nextValve(no)
 
@@ -821,63 +835,50 @@ class MainWindow(QMainWindow):
         if no >= self.oIdxName["Valve1"] and no <= self.oIdxName["Dog_Feed"]:
             self.rpiUtil.setOutput(no, isOpen)
 
-    # On 활성화/비활성화 Button Clicked(더 이상 안씀)
-    def onEnableBtnClicked(self, no):
-        """On 활성화/비활성화 Button Clicked callback(더 이상 안씀)
-
-        Args:
-            no (int): 번호
-        """
-        oBtn = self.btnEnableList[no-1]["o"]
-        isEnable = self.btnEnableList[no-1]["isEnable"]
-        if isEnable:
-            oBtn.setText("비활성화")
-            oBtn.setStyleSheet("background-color : orange; color:black;")
-            self.btnEnableList[no-1]["isEnable"] = False
-        elif isEnable == False:
-            oBtn.setText("활성화")
-            oBtn.setStyleSheet("background-color : green; color:black;")
-            self.btnEnableList[no-1]["isEnable"] = True
-        
-        cbIdx = int(self.cbList[no-1]["o"].currentText()[-1:])
-        self.printLine(cbIdx)
-        self.rpiOut(cbIdx+1, isEnable)
-
     # 활성화/비활성화 버튼 체크
     def checkBtnActive(self):
         """활성화/비활성화 버튼 체크
         """
-        for btnIdx, dBtn in enumerate(self.btnEnableList):
-            # 0번 활성화 버튼 4번 밸브 버튼, 4번은 combobox, spinbox가 없다.
-            if btnIdx != 0:
-                spIdx = btnIdx -1
-                spbox = self.spboxList[spIdx]
-                oBtn = dBtn["o"]
-                strBtn = oBtn.text()
-                if strBtn == "활성화":
-                    valveNo = int(self.cbList[spIdx]["o"].currentText()[-1:])
-                    oSpbox = spbox["o"]
-                    spboxValue = int(oSpbox.value())
-                    if spboxValue > 0:
-                        spboxValue = spboxValue -1
-                        oSpbox.setValue(spboxValue)
-                        # 남은 시간 저장하게 매초 넣게 수정
-                        nowValveIdx = -1
-                        if valveNo >= self.oIdxName["Valve1"] and valveNo <= self.oIdxName["Valve3"]:
-                            nowValveIdx = spIdx - 1
-                        elif valveNo == self.oIdxName["Valve5"]:
-                            nowValveIdx = 3
-                        self.taskNoticeQueue[nowValveIdx]["remain"] = str(spboxValue)
 
-                    if spboxValue == 0:
-                        oBtn.setText("비활성화")
-                        oBtn.setStyleSheet("background-color : orange; color : black;")
-                        # 현재 밸브 처리(GUI-선색깔)
-                        self.printLine(valveNo)
-                        # GPIO 닫기 처리
-                        self.rpiOut(valveNo, isOpen=False)
-                        # 0초 되면, 다음걸로 넘어가기
-                        self.nextValve(valveNo)
+        # 일시 정지 상태가 아니면,
+        if self.isPause == False:
+            for btnIdx, dBtn in enumerate(self.btnEnableList):
+                # 0번 활성화 버튼 4번 밸브 버튼, 4번은 combobox, spinbox가 없다.
+                if btnIdx != 0:
+                    spIdx = btnIdx -1
+                    spbox = self.spboxList[spIdx]
+                    oBtn = dBtn["o"]
+                    strBtn = oBtn.text()
+                    if strBtn == "활성화":
+                        valveNo = int(self.cbList[spIdx]["o"].currentText()[-1:])
+                        oSpbox = spbox["o"]
+                        spboxValue = int(oSpbox.value())
+                        if spboxValue > 0:
+                            spboxValue = spboxValue -1
+                            oSpbox.setValue(spboxValue)
+                            # 남은 시간 저장하게 매초 넣게 수정
+                            nowValveIdx = -1
+                            if valveNo >= self.oIdxName["Valve1"] and valveNo <= self.oIdxName["Valve3"]:
+                                nowValveIdx = spIdx - 1
+                            elif valveNo == self.oIdxName["Valve5"]:
+                                nowValveIdx = 3
+                            self.taskNoticeQueue[nowValveIdx]["remain"] = str(spboxValue)
+
+                        if spboxValue == 0:
+                            oBtn.setText("비활성화")
+                            oBtn.setStyleSheet("background-color : orange; color : black;")
+                            # 현재 밸브 처리(GUI-선색깔)
+                            self.printLine(valveNo)
+                            # GPIO 닫기 처리
+                            self.rpiOut(valveNo, isOpen=False)
+                            # 밸브 1,2,3이고, 다음 작업이 없을때 4번밸브도 끄게 수정
+                            if len(self.taskQueue) < 1 and valveNo >= self.oIdxName["Valve1"] and valveNo <= self.oIdxName["Valve3"]:
+                                self.printLine(self.oIdxName["Valve4"])
+                                self.rpiOut(self.oIdxName["Valve4"], isOpen=False)
+
+                            # 0초 되면, 다음걸로 넘어가기
+                            self.nextValve(valveNo)
+
         if self.oDogFeed["isRunning"] == True:
             nDogTime = self.spDogFeedTime.value()
             nDogTime = nDogTime - 1
@@ -971,7 +972,7 @@ class MainWindow(QMainWindow):
         else:
             txtPressure = "{} bar".format(pressure)
         
-        self.pressure.setText(txtPressure)
+        self.lbPressure.setText(txtPressure)
         self.manualPressure.setText(txtPressure)
 
         # 압력이 1bar 이상이면, 시퀀스 시작
@@ -979,18 +980,35 @@ class MainWindow(QMainWindow):
             Log.d(self.TAG, "{} bar ↑ = {} bar".format(self.startPressure, pressure))
             if self.isTaskRunning == False and self.body.currentIndex() == self.oIdxName["MODE_AUTO"]:
                 Log.d(self.TAG, "Auto mode Start...!")
+                self.isPause = False
                 self.startTask(self.oIdxName["Motor"])
             elif self.body.currentIndex() == self.oIdxName["MODE_MANUAL"]:
                 Log.d(self.TAG, "Manual mode...!")
             else:
                 Log.d(self.TAG, "Alreay runnning...!")
+        # 0.3 bar 이하이면, 일시정지
+        elif pressure <= self.stopPressure:
+            if self.isTaskRunning:
+                Log.d(self.TAG, "{} bar ↓ = {} bar".format(self.stopPressure, pressure))
+                # @TODO 일시정지 처리
+                #self.isPause = True
+                self.isTaskRunning = False
     
     # 압력 설정값 변경될 때,
     def setPressure(self):
         strPressure = self.edPressure.text()
+        strStopPressure = self.edStopPessure.text()
         prevPressure = self.startPressure
+        prevStopPressure = self.stopPressure
+
         self.startPressure = float(strPressure)
-        Log.i(self.TAG, "압력 설정값 바뀜 {} ===> {}".format(prevPressure, strPressure))
+        self.stopPressure = float(strStopPressure)
+
+        if prevPressure != strPressure:
+            Log.i(self.TAG, "동작 압력 설정값 바뀜 {} ===> {}".format(prevPressure, strPressure))
+
+        if prevStopPressure != strStopPressure:
+            Log.i(self.TAG, "중지 압력 설정값 바뀜 {} ===> {}".format(prevStopPressure, strStopPressure))
 
     # 현재 상태값(밸브순서, 설정한 초, 압력) 저장
     def saveSetting(self):
@@ -1007,6 +1025,7 @@ class MainWindow(QMainWindow):
         self.settings.setValue("SETTING/Sequence", ",".join(map(str, seqList)).replace("\"", ""))
         self.settings.setValue("SETTING/feed_time", str(self.spDogFeedTime.value()) +"s")
         self.settings.setValue("SETTING/pressure", self.startPressure)
+        self.settings.setValue("SETTING/stopPressure", self.stopPressure)
 
     #윈도우 닫을때
     def closeEvent(self, event):
