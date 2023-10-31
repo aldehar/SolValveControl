@@ -980,8 +980,10 @@ class MainWindow(QMainWindow):
             Log.d(self.TAG, "{} bar ↑ = {} bar".format(self.startPressure, pressure))
             if self.isTaskRunning == False and self.body.currentIndex() == self.oIdxName["MODE_AUTO"]:
                 Log.d(self.TAG, "Auto mode Start...!")
-                self.isPause = False
-                self.startTask(self.oIdxName["Motor"])
+                if self.isPause:
+                    self.isPause = False
+                else:
+                    self.startTask(self.oIdxName["Motor"])
             elif self.body.currentIndex() == self.oIdxName["MODE_MANUAL"]:
                 Log.d(self.TAG, "Manual mode...!")
             else:
