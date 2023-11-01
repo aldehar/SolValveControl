@@ -249,7 +249,7 @@ class MainWindow(QMainWindow):
         self.mainLayout.addLayout(self.topLayout)
 
         self.body = QStackedWidget()
-        self.body.setFixedSize(600,550)
+        self.body.setFixedSize(600,450)
         self.autoPage = QWidget()
         self.manualPage = QWidget()
 
@@ -259,8 +259,8 @@ class MainWindow(QMainWindow):
 
         # 배경
         self.lblBg = QLabel("", self.autoPage)
-        self.lblBg.move(0, 15)
-        self.lblBg.resize(600, 350)
+        self.lblBg.move(0, 0)
+        self.lblBg.resize(600, 325)
         self.pixmap = QPixmap()
         self.pixmap.load(self.oImg["bg"])
         self.pixmapVar = self.pixmap.scaledToWidth(600)
@@ -269,21 +269,21 @@ class MainWindow(QMainWindow):
 
         # 압력 게이지
         self.lbPressure = QLabel("-", self.autoPage)
-        self.lbPressure.move(210, 134)
+        self.lbPressure.move(210, 115)
         self.lbPressure.resize(300, 50)
         
         #선 - 왼쪽위에서 부터 1~10
         self.lineList = [
-            {"no":1, "o":None, "title":"1", "x":255, "y":125, "w":85,"h":5},
-            {"no":2, "o":None, "title":"2", "x":340, "y":125, "w":125,"h":5},
-            {"no":3, "o":None, "title":"3", "x":495, "y":125, "w":45,"h":5},
-            {"no":4, "o":None, "title":"4", "x":375, "y":130, "w":5,"h":90},
-            {"no":5, "o":None, "title":"5", "x":180, "y":215, "w":110,"h":5},
-            {"no":6, "o":None, "title":"6", "x":340, "y":215, "w":120,"h":5},
-            {"no":7, "o":None, "title":"7", "x":495, "y":215, "w":45,"h":5},
-            {"no":8, "o":None, "title":"8", "x":277, "y":220, "w":5,"h":68},
-            {"no":9, "o":None, "title":"9", "x":277, "y":283, "w":75,"h":5},
-            {"no":10, "o":None, "title":"10", "x":400, "y":283, "w":145,"h":5}
+            {"no":1, "o":None, "title":"1", "x":255, "y":95, "w":85,"h":5},
+            {"no":2, "o":None, "title":"2", "x":340, "y":97, "w":125,"h":5},
+            {"no":3, "o":None, "title":"3", "x":495, "y":95, "w":45,"h":5},
+            {"no":4, "o":None, "title":"4", "x":375, "y":102, "w":5,"h":90},
+            {"no":5, "o":None, "title":"5", "x":185, "y":185, "w":110,"h":5},
+            {"no":6, "o":None, "title":"6", "x":340, "y":190, "w":120,"h":5},
+            {"no":7, "o":None, "title":"7", "x":495, "y":190, "w":45,"h":5},
+            {"no":8, "o":None, "title":"8", "x":277, "y":190, "w":5,"h":68},
+            {"no":9, "o":None, "title":"9", "x":277, "y":253, "w":80,"h":5},
+            {"no":10, "o":None, "title":"10", "x":400, "y":253, "w":145,"h":5}
         ]
         
         for lblLine in self.lineList:
@@ -295,11 +295,11 @@ class MainWindow(QMainWindow):
         
         # 라벨
         self.labelList = [
-            {"no":1, "o":None, "title":"#1 Sol", "x":290, "y":60, "w":55,"h":25},
-            {"no":2, "o":None, "title":"#2 Sol", "x":440, "y":55, "w":55,"h":25},
-            {"no":3, "o":None, "title":"#3 Sol", "x":440, "y":145, "w":55,"h":25},
-            {"no":4, "o":None, "title":"#4 Sol", "x":290, "y":147, "w":55,"h":25},
-            {"no":5, "o":None, "title":"#5 Sol", "x":350, "y":235, "w":55,"h":25},
+            {"no":1, "o":None, "title":"#1 Sol", "x":290, "y":50, "w":55,"h":25},
+            {"no":2, "o":None, "title":"#2 Sol", "x":440, "y":45, "w":55,"h":25},
+            {"no":3, "o":None, "title":"#3 Sol", "x":440, "y":135, "w":55,"h":25},
+            {"no":4, "o":None, "title":"#4 Sol", "x":290, "y":137, "w":55,"h":25},
+            {"no":5, "o":None, "title":"#5 Sol", "x":355, "y":200, "w":55,"h":25},
         ]
         
         for lbl in self.labelList:
@@ -309,29 +309,37 @@ class MainWindow(QMainWindow):
 
         # 밸브 버튼
         self.btnList = [
-            {"no":1, "o":None, "title":"1", "isOpen":False, "x":290, "y":80, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[1]},
-            {"no":2, "o":None, "title":"2", "isOpen":False, "x":445, "y":75, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[3]},
-            {"no":3, "o":None, "title":"3", "isOpen":False, "x":445, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[7]},
-            {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[2, 4, 6]},
-            {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[10]},
-            {"no":6, "o":None, "title":"M", "isOpen":False, "x":140, "y":165, "w":51,"h":60, "img":self.oImg["pump_off"], "lineList":[5, 8, 9]},
-            {"no":7, "o":None, "title":"", "isOpen":False, "x":50, "y":250, "w":90,"h":60, "img":self.oImg["dog_feed_off"], "lineList":[]}
+            {"no":1, "o":None, "title":"1", "isOpen":False, "x":295, "y":75, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[1]},
+            {"no":2, "o":None, "title":"2", "isOpen":False, "x":445, "y":70, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[3]},
+            {"no":3, "o":None, "title":"3", "isOpen":False, "x":445, "y":162, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[7]},
+            {"no":4, "o":None, "title":"4", "isOpen":False, "x":295, "y":162, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[2, 4, 6]},
+            {"no":5, "o":None, "title":"5", "isOpen":False, "x":355, "y":225, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[10]},
+            {"no":6, "o":None, "title":"M", "isOpen":False, "x":145, "y":165, "w":51,"h":60, "img":self.oImg["pump_off"], "lineList":[5, 8, 9]},
+            {"no":7, "o":None, "title":"", "isOpen":False, "x":50, "y":230, "w":90,"h":60, "img":self.oImg["dog_feed_off"], "lineList":[]}
         ]
         
         for btn in self.btnList:
-            btn["o"] = QPushButton(btn["title"], self.autoPage)
+            btn["o"] = QPushButton(self.autoPage)
+            #btn["o"].setText(btn["title"])
             btn["o"].move(btn["x"], btn["y"])
             btn["o"].resize(btn["w"], btn["h"])
             btn["o"].setStyleSheet("background-image : url("+ btn["img"] +");background-repeat: no-repeat; background-color:blue;")
             btn["o"].clicked.connect(partial(self.onBtnClicked, btn["no"]))
 
+        # 개밥주기 시간
+        self.spDogFeedTime = QSpinBox(self.autoPage)
+        self.spDogFeedTime.move(50, 290)
+        self.spDogFeedTime.resize(90, 25)
+        self.spDogFeedTime.setRange(0, 9999)
+        self.spDogFeedTime.setValue(int(self.oDogFeed["feedTime"]))
+
         # 활성화/비활성화 버튼
         self.btnEnableList = [
-            {"no":1, "o":None, "title":"비활성화", "isEnable":False, "x":5, "y":360, "w":90,"h":20},
-            {"no":2, "o":None, "title":"비활성화", "isEnable":False, "x":105, "y":360, "w":90,"h":20},
-            {"no":3, "o":None, "title":"비활성화", "isEnable":False, "x":205, "y":360, "w":90,"h":20},
-            {"no":4, "o":None, "title":"비활성화", "isEnable":False, "x":305, "y":360, "w":90,"h":20},
-            {"no":5, "o":None, "title":"비활성화", "isEnable":False, "x":405, "y":360, "w":90,"h":20}
+            {"no":1, "o":None, "title":"비활성화", "isEnable":False, "x":5, "y":330, "w":90,"h":20},
+            {"no":2, "o":None, "title":"비활성화", "isEnable":False, "x":105, "y":330, "w":90,"h":20},
+            {"no":3, "o":None, "title":"비활성화", "isEnable":False, "x":205, "y":330, "w":90,"h":20},
+            {"no":4, "o":None, "title":"비활성화", "isEnable":False, "x":305, "y":330, "w":90,"h":20},
+            {"no":5, "o":None, "title":"비활성화", "isEnable":False, "x":405, "y":330, "w":90,"h":20}
         ]
 
         for btn in self.btnEnableList:
@@ -347,22 +355,22 @@ class MainWindow(QMainWindow):
         lbValve4.setText("Valve 4")
         lbValve4.setStyleSheet("background-color :#e1e1e1; border: 1px solid #adadad;")
         lbValve4.setAlignment(Qt.AlignCenter)
-        lbValve4.move(5, 390)
+        lbValve4.move(5, 355)
         lbValve4.resize(90, 25)
 
         # 시간설정 버튼
         self.btnSetTime = QPushButton(self.autoPage)
         self.btnSetTime.setText("시간 저장")
-        self.btnSetTime.move(5, 420)
+        self.btnSetTime.move(5, 385)
         self.btnSetTime.resize(90, 25)
         self.btnSetTime.clicked.connect(self.onBtnClicked)
 
         # 콤보박스 - 밸브선택
         self.cbList = [
-            {"no":1, "o":None, "title":"2", "x":105, "y":390, "w":90,"h":25},
-            {"no":2, "o":None, "title":"3", "x":205, "y":390, "w":90,"h":25},
-            {"no":3, "o":None, "title":"4", "x":305, "y":390, "w":90,"h":25},
-            {"no":4, "o":None, "title":"5", "x":405, "y":390, "w":90,"h":25}
+            {"no":1, "o":None, "title":"2", "x":105, "y":355, "w":90,"h":25},
+            {"no":2, "o":None, "title":"3", "x":205, "y":355, "w":90,"h":25},
+            {"no":3, "o":None, "title":"4", "x":305, "y":355, "w":90,"h":25},
+            {"no":4, "o":None, "title":"5", "x":405, "y":355, "w":90,"h":25}
         ]
         
         for cb in self.cbList:
@@ -378,10 +386,10 @@ class MainWindow(QMainWindow):
         
         # 밸브 초 값 스핀박스
         self.spboxList = [
-            {"no": 1, "o":None, "title":"2", "x":105, "y":420, "w":75,"h":25, "isHidden":False},
-            {"no": 2, "o":None, "title":"3", "x":205, "y":420, "w":75,"h":25, "isHidden":False},
-            {"no": 3, "o":None, "title":"4", "x":305, "y":420, "w":75,"h":25, "isHidden":False},
-            {"no": 4, "o":None, "title":"5", "x":405, "y":420, "w":75,"h":25, "isHidden":False}
+            {"no": 1, "o":None, "title":"2", "x":105, "y":385, "w":75,"h":25, "isHidden":False},
+            {"no": 2, "o":None, "title":"3", "x":205, "y":385, "w":75,"h":25, "isHidden":False},
+            {"no": 3, "o":None, "title":"4", "x":305, "y":385, "w":75,"h":25, "isHidden":False},
+            {"no": 4, "o":None, "title":"5", "x":405, "y":385, "w":75,"h":25, "isHidden":False}
         ]
         
         for spbox in self.spboxList:
@@ -396,11 +404,11 @@ class MainWindow(QMainWindow):
 
         # 밸브 초 라벨
         self.timeLblList = [
-            {"no": 1, "o":None, "title":"초", "x":85, "y":425, "w":20,"h":20, "isHidden":True},
-            {"no": 2, "o":None, "title":"초", "x":185, "y":425, "w":20,"h":20, "isHidden":False},
-            {"no": 3, "o":None, "title":"초", "x":285, "y":425, "w":20,"h":20, "isHidden":False},
-            {"no": 4, "o":None, "title":"초", "x":385, "y":425, "w":20,"h":20, "isHidden":False},
-            {"no": 5, "o":None, "title":"초", "x":485, "y":425, "w":20,"h":20, "isHidden":False}
+            {"no": 1, "o":None, "title":"초", "x":85, "y":385, "w":20,"h":20, "isHidden":True},
+            {"no": 2, "o":None, "title":"초", "x":185, "y":385, "w":20,"h":20, "isHidden":False},
+            {"no": 3, "o":None, "title":"초", "x":285, "y":385, "w":20,"h":20, "isHidden":False},
+            {"no": 4, "o":None, "title":"초", "x":385, "y":385, "w":20,"h":20, "isHidden":False},
+            {"no": 5, "o":None, "title":"초", "x":485, "y":385, "w":20,"h":20, "isHidden":False}
         ]
         
         for lbl in self.timeLblList:
@@ -414,33 +422,26 @@ class MainWindow(QMainWindow):
         # 동작 압력 설정
         lblSetPressure = QLabel(self.autoPage)
         lblSetPressure.setText("동작/중지 압력")
-        lblSetPressure.move(505, 365)
+        lblSetPressure.move(505, 335)
 
         self.edPressure = QLineEdit(self.autoPage)
-        self.edPressure.move(505, 390)
+        self.edPressure.move(505, 355)
         self.edPressure.setText(str(self.startPressure))
         self.edPressure.resize(30, 25)
 
         self.edStopPressure = QLineEdit(self.autoPage)
-        self.edStopPressure.move(540, 390)
+        self.edStopPressure.move(540, 355)
         self.edStopPressure.setText(str(self.stopPressure))
         self.edStopPressure.resize(30, 25)
 
         lblBar = QLabel(self.autoPage)
         lblBar.setText("bar")
-        lblBar.move(575, 400)
+        lblBar.move(575, 360)
 
         self.btnSetPressure = QPushButton(self.autoPage, text="압력 저장")
-        self.btnSetPressure.move(505, 420)
+        self.btnSetPressure.move(505, 385)
         self.btnSetPressure.resize(80, 25)
         self.btnSetPressure.clicked.connect(self.setPressure)
-
-        # 개밥주기 시간
-        self.spDogFeedTime = QSpinBox(self.autoPage)
-        self.spDogFeedTime.move(50, 310)
-        self.spDogFeedTime.resize(90, 25)
-        self.spDogFeedTime.setRange(0, 9999)
-        self.spDogFeedTime.setValue(int(self.oDogFeed["feedTime"]))
         
         ###########################################################################################
         # 수동 레이아웃
@@ -448,8 +449,8 @@ class MainWindow(QMainWindow):
 
         # 배경
         self.lblBgManual = QLabel("", self.manualPage)
-        self.lblBgManual.move(0, 15)
-        self.lblBgManual.resize(600, 350)
+        self.lblBgManual.move(0, 0)
+        self.lblBgManual.resize(600, 325)
         self.pixmapManual = QPixmap()
         self.pixmapManual.load(self.oImg["bg"])
         self.pixmapVarManual = self.pixmapManual.scaledToWidth(600)
@@ -458,21 +459,21 @@ class MainWindow(QMainWindow):
 
         # 압력 게이지
         self.manualPressure = QLabel("-", self.manualPage)
-        self.manualPressure.move(210, 124)
+        self.manualPressure.move(210, 115)
         self.manualPressure.resize(300, 50)
 
         #선
         self.manualLineList = [
-            {"no":1, "o":None, "title":"1", "x":255, "y":125, "w":85,"h":5},
-            {"no":2, "o":None, "title":"2", "x":340, "y":125, "w":125,"h":5},
-            {"no":3, "o":None, "title":"3", "x":495, "y":125, "w":45,"h":5},
-            {"no":4, "o":None, "title":"4", "x":375, "y":130, "w":5,"h":90},
-            {"no":5, "o":None, "title":"5", "x":180, "y":215, "w":110,"h":5},
-            {"no":6, "o":None, "title":"6", "x":340, "y":215, "w":120,"h":5},
-            {"no":7, "o":None, "title":"7", "x":495, "y":215, "w":45,"h":5},
-            {"no":8, "o":None, "title":"8", "x":277, "y":220, "w":5,"h":68},
-            {"no":9, "o":None, "title":"9", "x":277, "y":283, "w":75,"h":5},
-            {"no":10, "o":None, "title":"10", "x":400, "y":283, "w":145,"h":5}
+            {"no":1, "o":None, "title":"1", "x":255, "y":95, "w":85,"h":5},
+            {"no":2, "o":None, "title":"2", "x":340, "y":97, "w":125,"h":5},
+            {"no":3, "o":None, "title":"3", "x":495, "y":95, "w":45,"h":5},
+            {"no":4, "o":None, "title":"4", "x":375, "y":102, "w":5,"h":90},
+            {"no":5, "o":None, "title":"5", "x":185, "y":185, "w":110,"h":5},
+            {"no":6, "o":None, "title":"6", "x":340, "y":190, "w":120,"h":5},
+            {"no":7, "o":None, "title":"7", "x":495, "y":190, "w":45,"h":5},
+            {"no":8, "o":None, "title":"8", "x":277, "y":190, "w":5,"h":68},
+            {"no":9, "o":None, "title":"9", "x":277, "y":253, "w":80,"h":5},
+            {"no":10, "o":None, "title":"10", "x":400, "y":253, "w":145,"h":5}
         ]
         
         for lblLine in self.manualLineList:
@@ -484,31 +485,33 @@ class MainWindow(QMainWindow):
         
         # 라벨
         self.manualLabelList = [
-            {"no":1, "o":None, "title":"#1 Sol", "x":290, "y":60, "w":55,"h":25},
-            {"no":2, "o":None, "title":"#2 Sol", "x":440, "y":55, "w":55,"h":25},
-            {"no":3, "o":None, "title":"#3 Sol", "x":440, "y":145, "w":55,"h":25},
-            {"no":4, "o":None, "title":"#4 Sol", "x":290, "y":147, "w":55,"h":25},
-            {"no":5, "o":None, "title":"#5 Sol", "x":350, "y":235, "w":55,"h":25}
+            {"no":1, "o":None, "title":"#1 Sol", "x":290, "y":50, "w":55,"h":25},
+            {"no":2, "o":None, "title":"#2 Sol", "x":440, "y":45, "w":55,"h":25},
+            {"no":3, "o":None, "title":"#3 Sol", "x":440, "y":135, "w":55,"h":25},
+            {"no":4, "o":None, "title":"#4 Sol", "x":290, "y":137, "w":55,"h":25},
+            {"no":5, "o":None, "title":"#5 Sol", "x":355, "y":200, "w":55,"h":25}
         ]
         
         for lbl in self.manualLabelList:
-            lbl["o"] = QLabel(lbl["title"], self.manualPage)
+            lbl["o"] = QLabel(self.manualPage)
+            lbl["o"].setText(lbl["title"])
             lbl["o"].move(lbl["x"], lbl["y"])
             lbl["o"].resize(lbl["w"], lbl["h"])
 
         # 밸브 버튼
         self.manualBtnList = [
-            {"no":1, "o":None, "title":"1", "isOpen":False, "x":290, "y":80, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[1]},
-            {"no":2, "o":None, "title":"2", "isOpen":False, "x":445, "y":75, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[3]},
-            {"no":3, "o":None, "title":"3", "isOpen":False, "x":445, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[7]},
-            {"no":4, "o":None, "title":"4", "isOpen":False, "x":290, "y":167, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[2, 4, 6]},
-            {"no":5, "o":None, "title":"5", "isOpen":False, "x":350, "y":255, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[10]},
-            {"no":6, "o":None, "title":"M", "isOpen":False, "x":140, "y":165, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[5, 8, 9]},
-            {"no":7, "o":None, "title":"", "isOpen":False, "x":50, "y":250, "w":90,"h":60, "img":self.oImg["dog_feed_off"], "lineList":[]}
+            {"no":1, "o":None, "title":"1", "isOpen":False, "x":295, "y":75, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[1]},
+            {"no":2, "o":None, "title":"2", "isOpen":False, "x":445, "y":70, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[3]},
+            {"no":3, "o":None, "title":"3", "isOpen":False, "x":445, "y":162, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[7]},
+            {"no":4, "o":None, "title":"4", "isOpen":False, "x":295, "y":162, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[2, 4, 6]},
+            {"no":5, "o":None, "title":"5", "isOpen":False, "x":355, "y":225, "w":51,"h":60, "img":self.oImg["valve_off"], "lineList":[10]},
+            {"no":6, "o":None, "title":"M", "isOpen":False, "x":145, "y":165, "w":51,"h":60, "img":self.oImg["pump_off"], "lineList":[5, 8, 9]},
+            {"no":7, "o":None, "title":"", "isOpen":False, "x":50, "y":230, "w":90,"h":60, "img":self.oImg["dog_feed_off"], "lineList":[]}
         ]
         
         for btn in self.manualBtnList:
-            btn["o"] = QPushButton(btn["title"], self.manualPage)
+            btn["o"] = QPushButton(self.manualPage)
+            #btn["o"].setText(btn["title"])
             btn["o"].move(btn["x"], btn["y"])
             btn["o"].resize(btn["w"], btn["h"])
             btn["o"].setStyleSheet("background-image : url({});background-repeat: no-repeat; background-color:blue;".format(btn["img"]))
@@ -531,6 +534,15 @@ class MainWindow(QMainWindow):
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(self.mainWidget)
         self.setCentralWidget(self.scroll)
+
+    # status bar message 출력
+    def printStusbar(self, msg):
+        """status bar message 출력
+
+        Args:
+            msg (string): 상태바에 출력하고 싶은 메세지
+        """
+        self.statusBar().showMessage("{} - [{}]".format(msg, getNow()))
 
     # On 온/오프 버튼 clicked
     def onOffBtnClicked(self):
@@ -977,7 +989,10 @@ class MainWindow(QMainWindow):
 
         # 압력이 1bar 이상이면, 시퀀스 시작
         if pressure >= self.startPressure:
-            Log.d(self.TAG, "{} bar ↑ = {} bar".format(self.startPressure, pressure))
+            msg = "{} bar ↑ = {} bar => {} ".format(self.startPressure, pressure, not self.isTaskRunning)
+            Log.d(self.TAG, msg)
+            self.printStusbar(msg)
+
             if self.isTaskRunning == False and self.body.currentIndex() == self.oIdxName["MODE_AUTO"]:
                 Log.d(self.TAG, "Auto mode Start...!")
                 if self.isPause:
@@ -1003,7 +1018,10 @@ class MainWindow(QMainWindow):
         # 0.3 bar 이하이면, 일시정지
         elif pressure <= self.stopPressure:
             if self.isTaskRunning:
-                Log.d(self.TAG, "{} bar ↓ = {} bar".format(self.stopPressure, pressure))
+                msg = "{} bar ↓ = {} bar".format(self.startPressure, pressure)
+                Log.d(self.TAG, msg)
+                self.printStusbar(msg)
+
                 # 일시정지 처리
                 self.isPause = True
                 self.isTaskRunning = False
@@ -1105,7 +1123,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = MainWindow()
     win.setWindowTitle("Solenoid Valve Controller v0.1 [Test]")
-    win.resize(625, 520)
+    win.resize(625, 510)
     win.moveToCenter()
     win.show()
 
